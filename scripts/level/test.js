@@ -6,7 +6,6 @@ async function main() {
 
     player.Teleport([700, 0]);
 
-    player.docRef.innerText = "balls"
     player.godMode = false;
     player.notarget = false;
     
