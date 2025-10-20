@@ -1,0 +1,60 @@
+* {
+    padding: 0;
+    margin: 0;
+    
+    overflow: hidden;
+}
+
+body {
+    height: 100vh;
+}
+
+#player {
+    border-radius: 50%;
+
+}
+
+.entity {
+    position: absolute;
+    
+    width: 100px;
+    height: 100px;
+    background-color: blue;
+    background-size: cover;
+    
+}
+
+.sentient {
+    background-color: lime !important;
+}
+
+.safespace {
+
+    height: 800px;
+    width: 800px;
+
+    border: 2px solid red;
+}
+
+.testref {
+    position: absolute;
+
+    height: 100px;
+    width: 100px;
+    background-color: red;
+
+    margin-left: 300px;
+    margin-top: 120px;
+}
+
+.dead {
+    transition-property: background-color, transform;
+    transition-duration: 0.1s;
+    transition-timing-function: ease-in-out;
+
+    transform: rotate(90deg);
+
+    filter: grayscale(1);
+    
+    /* mix-blend-mode: multiply; */
+}
