@@ -135,6 +135,16 @@ class Entity {
         return [this.pos[0] + (this.coll[0] / 2), this.pos[1] + (this.coll[1] / 2)]; 
     }
 
+    IsToTheLeft(ent2) {
+        return this.CenterOfMass()[0] > ent2.CenterOfMass()[0];
+    }
+
+    IsAbove(ent2) {
+        let v1 = this.CenterOfMass()[1] > ent2.CenterOfMass()[1];
+        cl(v1)
+        return v1;
+    }
+
     async Collide() {
         while (this.collTarget == undefined) {
             await new Promise(resolve => setTimeout(resolve, tickrate));

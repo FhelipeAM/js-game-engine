@@ -105,7 +105,7 @@ class Sentient extends Entity {
     }
 
     InRangeToTarget() {
-        return distance(this, this.target) < (this.coll[0] + this.weapons.range);
+        return distance(this, this.target) <= this.weapons.range;
     }
     
     async Death() {        

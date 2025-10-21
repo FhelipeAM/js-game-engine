@@ -12,7 +12,11 @@ function cl(str) {
 }
 
 function distance(ent1, ent2) {
-    let v1 = ((ent1.pos[0] + ent1.coll[0]) + (ent1.pos[1] + ent1.coll[1])) - ((ent2.pos[0] + ent2.coll[0]) + (ent2.pos[1] + ent2.coll[1]));
+    let v1 = (ent1.CenterOfMass()[0]) - (ent2.CenterOfMass()[0]);
+
+    if (v1 <= 0) 
+        v1 *= -1;
+    
     return v1;
 }
 
@@ -34,7 +38,7 @@ document.addEventListener("mousedown", async (event) => {
     var ClickRef = new Entity("mousePos"+entCount, [valX, valy], [100, 100], "red")
     ClickRef.Weight = 10;
     ClickRef.ignoreGravity = true;
-    ClickRef.solid = true;
+    ClickRef.solid = false;
 })
 
 document.addEventListener("keypress", async (event) => {

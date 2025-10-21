@@ -1,10 +1,11 @@
 var weaponTemplate = [];
+var weapons = [];
 var friendlyFire = false;
 
 
 function _RegisterWeapons() {
 
-    new Weapon("DEFAULTMELEE", "melee", 12, 20, 1, Infinity, 0.1, 1, [{
+    new Weapon("DEFAULTMELEE", "melee", 12, 100, 1, Infinity, 0.1, 1, 10, [{
         name: "attack",
         path: [
             "./assets/snd/weapon/Slash1.ogg",
@@ -21,7 +22,7 @@ function _RegisterWeapons() {
     }
     ])
 
-    new Weapon("TESTRIFLE", "range", 24, 300, 20, 320, 2.6, 4, [{
+    new Weapon("TESTRIFLE", "range", 24, 1000, 20, 320, 2.6, 4, 10, [{
         name: "attack",
         path: "./assets/snd/weapon/Gunshot2.ogg",
         loop: false,
@@ -29,7 +30,7 @@ function _RegisterWeapons() {
     },
     {
         name: "reload",
-        path: "./assets/snd/error.mp3",
+        path: "./assets/snd/weapon/reload_m16.ogg",
         loop: false,
         vol: 0.2
     }
@@ -57,6 +58,7 @@ class Weapon {
     type;
     damage;
     sndSet;
+    bulletSpeed;
 
     reloading = false;
     
@@ -73,7 +75,7 @@ class Weapon {
 
     reloading = false;
     
-    constructor(name, type, damage, range, ammoCount, ammoCountRes, fireTime, reloadTime, sndSet) {
+    constructor(name, type, damage, range, ammoCount, ammoCountRes, fireTime, reloadTime, bulletSpeed, sndSet) {
 
         this.name = name;
         this.type = type;
@@ -90,6 +92,8 @@ class Weapon {
         this.fireTime = fireTime;
         this.reloadTime = reloadTime;
 
+        this.bulletSpeed = bulletSpeed;
+
         this.RegisterWeapon();
     }
 
@@ -102,8 +106,8 @@ class Weapon {
 
         let sound = this.GetWepSoundInfo("attack");
 
-        var bullet = new Bullet("bullet" + entCount, sset.CenterOfMass(), [sset.target.CenterOfMass()[0] > sset.CenterOfMass()[0] ? sset.target.CenterOfMass()[0] * this.range : (sset.target.CenterOfMass()[0] * this.range) * -1 , sset.target.CenterOfMass()[1]], 15, sset.team, sound)
-        bullet.movespeed = sset.bulletSpeed;
+        var bullet = new Bullet("bullet" + entCount, sset.CenterOfMass(), [sset.IsToTheLeft(sset.target) ? sset.CenterOfMass()[0] - this.range : sset.CenterOfMass()[0] + this.range, sset.target.CenterOfMass()[1]], 15, sset.team, sound)
+        bullet.movespeed = this.bulletSpeed;
         return bullet;
     }
 
