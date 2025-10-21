@@ -1,4 +1,5 @@
 var entities = [];
+entCount = 0;
 
 class Entity {
     //movement
@@ -6,6 +7,8 @@ class Entity {
     ignoreGravity = false;
     coll = [0, 0];
     collTarget;
+    solid = true;
+    weight = 0;
     mdl = "";
     docRef;
     
@@ -57,13 +60,16 @@ class Entity {
     }
 
     RegisterEntity() {
+        entCount++;
         entities.push(this);
     }
 
     Teleport(pos) {
         this.pos = pos;
         this.end = pos;
+        this.interpos = this.pos;
 
+        this.interpolating = false;
         this.docRef.style.marginLeft = pos[0] + "px";
         this.docRef.style.marginTop = pos[1] + "px";
     }
@@ -96,7 +102,15 @@ class Entity {
     
     SetModel(mdlstr) {
         this.mdl = mdlstr
-        this.docRef.style.backgroundImage = `url(${this.mdl})`
+        
+        if (mdlstr.includes('/')) {
+            this.docRef.style.backgroundImage = `url(${this.mdl})`
+            this.docRef.style.backgroundColor = `transparent`
+        }
+        else {
+            this.docRef.style.backgroundColor = `${this.mdl}`
+            this.docRef.style.backgroundImage = `url()`
+        } 
     }
 
     Hide() {
@@ -112,8 +126,13 @@ class Entity {
     }
 
     Delete() {
+        entities.splice(entities.indexOf(this), 1);
         this.docRef.remove();
         delete this;
+    }
+
+    CenterOfMass() {
+        return [this.pos[0] + (this.coll[0] / 2), this.pos[1] + (this.coll[1] / 2)]; 
     }
 
     async Collide() {

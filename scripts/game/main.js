@@ -3,17 +3,27 @@ const GameArea = document.getElementById("safespace");
 const tickrate = 1;
 const GameSafeSpace = GameArea.getBoundingClientRect();
 const gravity = 6;
+
+const devMode = true;
+
+var gamePaused = false;
 var timePassed = 0;
 
-const player = new Sentient("player", [0, 0], [100, 100], "./assets/img/testplayer.png", "allies", false);
+_RegisterWeapons();
+_RegisterSounds();
+
+const player = new Sentient("player", [0, 0], [100, 100], "./assets/img/testplayer.jpg", "allies", false);
 
 function __sysMain() {
     GameArea.style.height = GameSafeSpace.bottom + "px";
     GameArea.style.width = GameSafeSpace.right + "px";
-
+    
     _initControls(player);
 
     const tickSystem = setInterval(() => {
+        if (gamePaused)
+            return;
+
         _Controls();
 
         entities.forEach((ent) => {
@@ -27,9 +37,7 @@ function __sysMain() {
         });
 
         timePassed++;
-        // console.log(player.midAir);
     }, tickrate);
-    // console.log(GameSafeSpace.bottom);
 }
 
 function _gravityMain(ent) {
@@ -45,46 +53,75 @@ function _gravityMain(ent) {
         ent.midAir = false;
     }
 }
-
 function _collMain(ent) {
     let cs = false;
 
     for (let i = 0; i < entities.length; i++) {
-        ent2 = entities[i];
+        var ent2 = entities[i];
 
-        if (ent === ent2)
-            continue;
-    
+        if (ent === ent2) continue;
+
         let entLeft = ent.pos[0];
         let entRight = ent.pos[0] + ent.coll[0];
         let entTop = ent.pos[1];
         let entBottom = ent.pos[1] + ent.coll[1];
-        
+
         let ent2Left = ent2.pos[0];
         let ent2Right = ent2.pos[0] + ent2.coll[0];
         let ent2Top = ent2.pos[1];
         let ent2Bottom = ent2.pos[1] + ent2.coll[1];
-        
-        // Check if rectangles overlap
+
         if (entLeft < ent2Right && entRight > ent2Left &&
             entTop < ent2Bottom && entBottom > ent2Top) {
-            cs = true;
-            ent.collTarget = ent2;
-            return;
+
+            if (!ent.solid) {
+                cs = true;
+                ent.collTarget = ent2;
+                return;
+            } else if (ent2.solid) {
+                let overlapX = Math.min(entRight, ent2Right) - Math.max(entLeft, ent2Left);
+                let overlapY = Math.min(entBottom, ent2Bottom) - Math.max(entTop, ent2Top);
+
+                if (overlapX < overlapY) {
+                    if (ent.pos[0] < ent2.pos[0]) {
+                        ent.pos[0] = ent2.pos[0] - ent.coll[0];
+                    } else {
+                        ent.pos[0] = ent2.pos[0] + ent2.coll[0];
+                    }
+                }
+                else {
+                    if (ent.pos[1] < ent2.pos[1]) {
+                        ent.pos[1] = ent2.pos[1] - ent.coll[1];
+                    } else {
+                        ent.pos[1] = ent2.pos[1] + ent2.coll[1];
+                    }
+                }
+
+                //to avoid desync
+                ent.Teleport([ent.pos[0], ent.pos[1]]);
+
+                return;
+            }
         }
     }
 
-    if (!cs)
+    if (!cs) {
         ent.collTarget = undefined;
+    }
 }
 
 function _interpolateMain(ent) {
     if (!ent.interpolating) return;
 
+    if (!ent.docRef.classList.contains("ltr"))
+        ent.docRef.classList.add("ltr");
+
     if (ent.end[0] > ent.pos[0] && ent.interpos[0] != ent.end[0]) {
         ent.interpos[0] = ent.interpos[0] + 1 * ent.movespeed;
+        ent.docRef.classList.replace("rtl", "ltr");
     } else if (ent.interpos[0] != ent.end[0]) {
         ent.interpos[0] = ent.interpos[0] - 1 * ent.movespeed;
+        ent.docRef.classList.replace("ltr", "rtl");
     }
 
     ent.docRef.style.marginLeft = ent.interpos[0] + "px";

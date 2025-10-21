@@ -1,6 +1,8 @@
 var pressedKeys = [];
 var movementTarget = document.getElementById("stub");
 var disableControls = false;
+var lastJumpTime = 0;
+const jumpDelay = 0.1;
 
 var KeyBinds = [
     {
@@ -49,19 +51,20 @@ function _Controls() {
             }
         }
 
-        if (getActionFromKeybind(key) == "jump" && !movementTarget.midAir) {
-            diry = movementTarget.pos[1] - 50;
-            movementTarget.midAir = true;
+        let jmpcheck = lastJumpTime + (jumpDelay * 1000) < timePassed;
+
+        if (getActionFromKeybind(key) == "jump" && !movementTarget.midAir && jmpcheck) {
+            lastJumpTime = timePassed;
+            diry = movementTarget.pos[1] - 100;
+            //gotta love the desync
+            movementTarget.Teleport([dirx, diry]);
         }
         
         if (getActionFromKeybind(key) == "shoot") {
-            movementTarget.Shoot();
+            movementTarget.weapons.Shoot(movementTarget);
         }
-        // if (dirx != movementTarget.pos[0])
-        movementTarget.MoveTo([dirx, diry], movementTarget.midAir);
-        // movementTarget.MoveTo([dirx], movementTarget.midAir);
-        // if (diry != movementTarget.pos[1])
-        // movementTarget.MoveTo([undefined, diry], movementTarget.midAir);
+
+        movementTarget.MoveTo([dirx, diry], true);
     })
 }
 
@@ -97,5 +100,25 @@ function getKeybindFromAction(action) {
 }
 
 function _CameraScroll() {
-    document.body.scrollLeft += player.pos[1];
+
+    const playerX = player.CenterOfMass()[0];
+    const playerY = player.CenterOfMass()[1];
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const scrollX = playerX - viewportWidth / 2;
+    const scrollY = playerY - viewportHeight / 2;
+
+    const maxScrollX = document.body.scrollWidth - viewportWidth;
+    const maxScrollY = document.body.scrollHeight - viewportHeight;
+
+    const clampedX = Math.max(0, Math.min(scrollX, maxScrollX));
+    const clampedY = Math.max(0, Math.min(scrollY, maxScrollY));
+
+    window.scrollTo({
+        left: clampedX,
+        top: clampedY,
+        // behavior: 'smooth'
+    });
 }
