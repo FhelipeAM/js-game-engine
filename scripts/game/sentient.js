@@ -43,7 +43,7 @@ class Sentient extends Entity {
         if (this.team == "unset")
             return;
 
-        if (this.target == undefined || !this._validTarget()) {
+        if (!this._validTarget()) {
             this._seekTarget();
         } else {
             this._chase();
@@ -51,7 +51,11 @@ class Sentient extends Entity {
     }
 
     _validTarget() {
-        return this.target.team != "unset" && !this.target.dead && this.target.team != this.team && !this.target.notarget;
+        return this.target != undefined && this.target.team != "unset" && !this.target.dead && this.target.team != this.team && !this.target.notarget;
+    }
+
+    _validEntToTarget(ent) {
+        return !ent.dead && ent.team != "unset" && ent.team != this.team && !ent.notarget;
     }
 
     _seekTarget() {
@@ -60,13 +64,21 @@ class Sentient extends Entity {
             return;
         }
 
-        sentients.forEach((se) => {
-            if (!se.dead &&
-                se.team != "unset" && 
-                se.team != this.team) {
-                this.target = se;
+        let closest = null;
+        let closestDistance = Infinity;
+
+        for (const se of sentients) {
+
+            if (se === this || !this._validEntToTarget(se)) continue;
+
+            const dist = distance(this, se);
+            if (dist < closestDistance) {
+                closest = se;
+                closestDistance = dist;
             }
-        });
+        }
+
+        this.target = closest;
     }
 
     _chase() {
@@ -79,13 +91,15 @@ class Sentient extends Entity {
             } else if (!this.weapons.reloading) {
                 this.weapons.Reload(this);
             }
+
+            return;
         }
 
         let stub = [];
         stub[0] = this.target.pos[0];
         stub[1] = this.target.pos[1];
 
-        this.MoveTo(stub, true)
+        this.MoveTo(stub, false)
     }
 
     RegisterSentient() {
@@ -96,19 +110,21 @@ class Sentient extends Entity {
         this.weapons = weapon;
     }
 
-    
+
     Damage(amount) {
         if (this.health <= 0 || this.godMode)
             return;
-        
+
+        D_DrawText(this.pos, "-" + amount, "red", 2);
+
         this.health -= amount;
     }
 
     InRangeToTarget() {
         return distance(this, this.target) <= this.weapons.range;
     }
-    
-    async Death() {        
+
+    async Death() {
         while (this.health > 0) {
             await new Promise(resolve => setTimeout(resolve, tickrate));
         }

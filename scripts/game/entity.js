@@ -11,7 +11,7 @@ class Entity {
     weight = 0;
     mdl = "";
     docRef;
-    
+
     //untweakable
     pos = [0, 0];
     end = [0, 0];
@@ -42,7 +42,7 @@ class Entity {
 
     SpawnEntity(id) {
         var stub = document.createElement("div");
-        
+
         // console.log(id);
         stub.setAttribute("id", id);
         stub.classList.add("entity");
@@ -99,18 +99,67 @@ class Entity {
         this.docRef.style.width = this.coll[0] + "px";
         this.docRef.style.height = this.coll[1] + "px";
     }
-    
+
     SetModel(mdlstr) {
         this.mdl = mdlstr
-        
+
         if (mdlstr.includes('/')) {
             this.docRef.style.backgroundImage = `url(${this.mdl})`
             this.docRef.style.backgroundColor = `transparent`
         }
-        else {
+        else if (Array.isArray(mdlstr)) {
+            let dat = this.mdl[1];
+            this.docRef.innerText = `${this.mdl[0]}`
+            this.docRef.style.backgroundColor = `transparent`
+            this.docRef.style.backgroundImage = `url()`
+            this.docRef.style.display = `flex`
+
+            switch (dat["alignY"]) {
+                default:
+                case "top":
+                    this.docRef.style.alignItems = `start`
+                    break;
+                case "center":
+                    this.docRef.style.alignItems = `center`
+                    break;
+                case "bottom":
+                    this.docRef.style.alignItems = `end`
+                    break;
+            }
+
+            switch (dat["alignX"]) {
+                default:
+                case "left":
+                    this.docRef.style.justifyContent = `start`
+                    break;
+                case "center":
+                    this.docRef.style.justifyContent = `center`
+                    break;
+                case "right":
+                    this.docRef.style.justifyContent = `end`
+                    break;
+            }
+
+            if("color" in dat) {
+                this.docRef.style.color = dat["color"];
+            }
+
+            if("fontSize" in dat) {
+                this.docRef.style.fontSize = dat["fontSize"] + "px";
+            }
+
+            if("fontFam" in dat) {
+                this.docRef.style.fontFamily = dat["fontFam"];
+            }
+
+            if("index" in dat) {
+                this.docRef.style.zIndex = dat["index"];
+            }
+
+        } else {
             this.docRef.style.backgroundColor = `${this.mdl}`
             this.docRef.style.backgroundImage = `url()`
-        } 
+        }
     }
 
     Hide() {
@@ -126,13 +175,21 @@ class Entity {
     }
 
     Delete() {
+        if (this.docRef == null)
+            return;
+
         entities.splice(entities.indexOf(this), 1);
+    
+        GameArea.removeChild(this.docRef);
         this.docRef.remove();
-        delete this;
+        this.docRef = null;
+
+        delete this.docRef;
+    
     }
 
     CenterOfMass() {
-        return [this.pos[0] + (this.coll[0] / 2), this.pos[1] + (this.coll[1] / 2)]; 
+        return [this.pos[0] + (this.coll[0] / 2), this.pos[1] + (this.coll[1] / 2)];
     }
 
     IsToTheLeft(ent2) {

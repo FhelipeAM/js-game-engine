@@ -1,18 +1,50 @@
+disableControls = false;
+
 async function main() {
-
-    var testcol4 = new Sentient("testref23", [player.pos[0] * 2, player.pos[1]], [100, 100], "./assets/img/testent2.png", "axis", true);
-    testcol4.movespeed = .8;
-    // testcol4.GiveWeapon(GetWeaponByName("TESTRIFLE"));
-
-    player.Teleport([2000, 0]);
-
-    RegisterSound("sad_song1", "./assets/snd/music/sad_song1_faststart.mp3", false, 0.2);
-
+    
+    player.Teleport([200, 500]);
+    player.godMode = true;
+    player.solid = false;
+    player.notarget = true;
+    // player.health = 10000
+    
     await player.OnGround();
 
-    var testcol5 = new Sentient("testref25", [player.pos[0], player.pos[1]], [100, 100], "./assets/img/testent.jpg", "team3", true)
-    
-    await player.Death();
-    
-    PlaySound(GetSoundInfo("sad_song1"));
+    funnyloop();
+
+    entloop();
+    entloop2();
+}
+
+async function funnyloop() {
+
+    var test = new GameText(player.pos, "Test", {color: "red", alignX: "center", alignY: "center", fontSize: 128})
+
+    while (true) {
+        await test.FadeIn(1);
+
+        await test.FadeOut(1);
+    }
+}
+
+async function entloop() {
+
+    while (true) {
+            
+        var testcol5 = new Sentient("testref_1"+entCount, [2000, 300], [100, 100], "./assets/img/testent.jpg", "team3", true)
+        testcol5.GiveWeapon(GetWeaponByName("TESTRIFLE"));
+
+        await testcol5.Death();
+    }
+}
+
+async function entloop2() {
+
+    while (true) {
+                
+        var testcol4 = new Sentient("testref_2"+entCount, [0, 300], [100, 100], "./assets/img/testent2.png", "axis", true);
+        testcol4.GiveWeapon(GetWeaponByName("TESTRIFLE2"));
+        
+        await testcol4.Death();
+    }
 }

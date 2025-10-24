@@ -38,6 +38,10 @@ function __sysMain() {
 
         timePassed++;
     }, tickrate);
+
+    return () => {
+        clearInterval(tickSystem);
+    };
 }
 
 function _gravityMain(ent) {
@@ -53,6 +57,7 @@ function _gravityMain(ent) {
         ent.midAir = false;
     }
 }
+
 function _collMain(ent) {
     let cs = false;
 

@@ -12,7 +12,17 @@ function cl(str) {
 }
 
 function distance(ent1, ent2) {
-    let v1 = (ent1.CenterOfMass()[0]) - (ent2.CenterOfMass()[0]);
+
+    let v1;
+    if (!Array.isArray(ent1))
+        v1 = (ent1.CenterOfMass()[0]);
+    else
+        v1 = ent1[0];
+
+    if (!Array.isArray(ent2))
+        v1 -= (ent2.CenterOfMass()[0]);
+    else
+        v1 -= ent2[0];
 
     if (v1 <= 0) 
         v1 *= -1;
@@ -25,21 +35,52 @@ function posSnap(ent) {
     return stub;
 }
 
-//GetMousePos
-document.addEventListener("mousedown", async (event) => {
+async function D_DrawLine(start, end, color, duration) {
 
     if (!devMode) return;
 
-    let valX = (event.clientX + window.scrollX);
-    let valy = (event.clientY + window.scrollY);
+    var posRef = new Entity("EntDist"+entCount, start, [distance(start, end), 5], color)
+    posRef.ignoreGravity = true;
+    posRef.solid = false;
 
-    cl("Mouse X: " + valX + ", Mouse Y: " + valy);
+    await s(duration);
+
+    posRef.Delete();
+}
+
+async function D_DrawText(start, text, acolor, duration) {
+    if (!devMode) return;
+    var text = new GameText(start, text, 
+        {
+            alignX: "center",
+            alignY: "center",
+            color: acolor,
+            fontSize: 64,
+            index: 40
+        });
+
+    await s(duration);
+
+    await text.FadeOut(1);
+
+    text.Delete();
+}
+
+//GetMousePos
+// document.addEventListener("mousedown", async (event) => {
+
+//     if (!devMode) return;
+
+//     let valX = (event.clientX + window.scrollX);
+//     let valy = (event.clientY + window.scrollY);
+
+//     cl("Mouse X: " + valX + ", Mouse Y: " + valy);
     
-    var ClickRef = new Entity("mousePos"+entCount, [valX, valy], [100, 100], "red")
-    ClickRef.Weight = 10;
-    ClickRef.ignoreGravity = true;
-    ClickRef.solid = false;
-})
+//     var ClickRef = new Entity("mousePos"+entCount, [valX, valy], [100, 100], "red")
+//     ClickRef.Weight = 10;
+//     ClickRef.ignoreGravity = true;
+//     ClickRef.solid = false;
+// })
 
 document.addEventListener("keypress", async (event) => {
 

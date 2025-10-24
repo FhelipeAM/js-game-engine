@@ -28,6 +28,10 @@ function GetSoundInfo(name) {
 }
 
 function PlaySound(soundInfo) {
+
+    if (soundInfo.path == null || soundInfo.path == "")
+        return;
+
     var audio = new Audio(PickRandomFromArray(soundInfo.path));
     audio.volume = soundInfo.vol;
     audio.loop = soundInfo.loop;

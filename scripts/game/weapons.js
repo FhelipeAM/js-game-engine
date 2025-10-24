@@ -1,11 +1,11 @@
-var weaponTemplate = [];
+var weaponTemplate = new Map();
 var weapons = [];
 var friendlyFire = false;
 
 
 function _RegisterWeapons() {
 
-    new Weapon("DEFAULTMELEE", "melee", 12, 100, 1, Infinity, 0.1, 1, 10, [{
+    new Weapon("DEFAULTMELEE", "melee", 12, 150, 1, Infinity, 0.1, 1, 10, [{
         name: "attack",
         path: [
             "./assets/snd/weapon/Slash1.ogg",
@@ -22,7 +22,22 @@ function _RegisterWeapons() {
     }
     ])
 
-    new Weapon("TESTRIFLE", "range", 24, 1000, 20, 320, 2.6, 4, 10, [{
+    new Weapon("TESTRIFLE", "range", 24, 1000, 20, 320, 2.6, 4, 5, [{
+        name: "attack",
+        path: "./assets/snd/weapon/Gunshot.ogg",
+        loop: false,
+        vol: 0.6
+    },
+    {
+        name: "reload",
+        path: "./assets/snd/weapon/reload_m16.ogg",
+        loop: false,
+        vol: 0.2
+    }
+    ])
+
+    //same gun different sound just so i dont go coo coo
+    new Weapon("TESTRIFLE2", "range", 24, 1000, 20, 320, 2.6, 4, 5, [{
         name: "attack",
         path: "./assets/snd/weapon/Gunshot2.ogg",
         loop: false,
@@ -38,19 +53,14 @@ function _RegisterWeapons() {
 }
 
 function GetWeaponByName(name) {
-    let ret = undefined;
-    weaponTemplate.forEach((wep) => {
-        if (wep.name == name) {
-            ret = new wep.constructor();
-            Object.assign(ret, wep);
-            return;
-        }
-    })
-    if (ret != undefined) {
-        return ret;
-    } else if (name != "DEFAULTMELEE") {
-        return GetWeaponByName("DEFAULTMELEE");
+    const template = weaponTemplate.get(name);
+    if (template) {
+        const weapon = Object.assign(Object.create(Object.getPrototypeOf(template)), template);
+        weapon.reloading = false;
+        weapon.LFT = 0;
+        return weapon;
     }
+    return weaponTemplate.get("DEFAULTMELEE");
 }
 
 class Weapon {
@@ -106,9 +116,7 @@ class Weapon {
 
         let sound = this.GetWepSoundInfo("attack");
 
-        var bullet = new Bullet("bullet" + entCount, sset.CenterOfMass(), [sset.IsToTheLeft(sset.target) ? sset.CenterOfMass()[0] - this.range : sset.CenterOfMass()[0] + this.range, sset.target.CenterOfMass()[1]], 15, sset.team, sound)
-        bullet.movespeed = this.bulletSpeed;
-        return bullet;
+        new Bullet("bullet" + entCount, sset.CenterOfMass(), [sset.IsToTheLeft(sset.target) ? sset.CenterOfMass()[0] - this.range : sset.CenterOfMass()[0] + this.range, sset.target.CenterOfMass()[1]], 15, sset.team, this.bulletSpeed, this.range, sound)
     }
 
     async Reload(sset) {
@@ -146,24 +154,32 @@ class Weapon {
     }
 
     RegisterWeapon() {
-        weaponTemplate.push(this);
+        weaponTemplate.set(this.name, this);
     }
 }
 
 class Bullet extends Entity {
     startTime = 0;
+    duration = 0;
+    lifeTime = 0;
+
     damage = 0;
     team = "unset";
+    bulletSpeed = 1;
 
-    constructor(id, startPos, end, dmg, team, sndInfo) {
+    constructor(id, startPos, end, dmg, team, bulletSpeed, bLifeTime, sndInfo) {
         super(id, startPos, [50, 50], "./assets/img/testbullet.png");
         this.ignoreGravity = true;
         this.solid = false;
 
         this.movespeed = 10;
         this.startTime = timePassed;
+        this.duration = bLifeTime;
+        this.lifeTime = this.startTime + this.duration;
         this.damage = dmg;
         this.team = team;
+
+        this.movespeed = bulletSpeed;
 
         if (sndInfo != undefined)
             PlaySound(sndInfo);
@@ -172,10 +188,20 @@ class Bullet extends Entity {
 
         this._CollListener();
 
-        this.AwaitGoal();
+        this._BulletCleanup();
+        this._CleanupGoal();
     }
 
-    async AwaitGoal() {
+    async _BulletCleanup() {
+        
+        while (this.lifeTime > timePassed) {
+            await ms(tickrate);
+        }
+
+        this.Delete();
+    }
+
+    async _CleanupGoal() {
         await this.Goal();
 
         this.Delete();
@@ -192,7 +218,6 @@ class Bullet extends Entity {
                     return;
                 }
             }
-            -
                 await ms(tickrate);
         }
     }
