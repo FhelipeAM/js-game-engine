@@ -18,6 +18,14 @@ var KeyBinds = [
         action: 'jump'
     },
     {
+        key: 'f',
+        action: 'pickup'
+    },
+    {
+        key: 'r',
+        action: 'reload'
+    },
+    {
         key: ' ',
         action: 'shoot'
     },
@@ -25,9 +33,13 @@ var KeyBinds = [
 
 function _initControls(target) {
     movementTarget = target;
+    movementTarget.target = new Entity("mousetarget", [0, 0], [1, 1], ["a", { opacity: 1 }])
+    movementTarget.target.ignoreGravity = true;
+    movementTarget.target.solid = false;
+
 }
 
-function _Controls() {
+async function _Controls() {
 
     _CameraScroll();
 
@@ -61,7 +73,11 @@ function _Controls() {
         }
         
         if (getActionFromKeybind(key) == "shoot") {
+            movementTarget.target.Teleport([mousePos[0], mousePos[1]]);
             movementTarget.weapons.Shoot(movementTarget);
+        } else if (getActionFromKeybind(key) == "reload") {
+            
+            movementTarget.weapons.Reload(movementTarget);
         }
 
         movementTarget.MoveTo([dirx, diry], true);
@@ -80,7 +96,7 @@ document.addEventListener("keyup", (key) => {
 
 function getActionFromKeybind(bind) {
     // console.log(bind)
-    let actionStub = "noAction";
+    let actionStub = "invalid";
 
     KeyBinds.forEach((elem) => {
         if (elem.key == bind)
@@ -90,7 +106,7 @@ function getActionFromKeybind(bind) {
 }
 
 function getKeybindFromAction(action) {
-    let KeyStub = "noKey";
+    let KeyStub = "unbound";
 
     KeyBinds.forEach((elem) => {
         if (elem.action == action)

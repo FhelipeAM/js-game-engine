@@ -1,9 +1,18 @@
 class GameText extends Entity {
+    text;
+    style;
+
     constructor(pos, text, style) {
         super("text" + entCount, pos, [100, 100], [text, style]);
+        this.text = text;
+        this.style = style;
 
         this.ignoreGravity = true;
         this.solid = false;
+    }
+    
+    entType() {
+        return "gametext";
     }
 
     async FadeOut(time) {
@@ -40,5 +49,20 @@ class GameText extends Entity {
 
             await ms(tickrate);
         }
+    }
+
+    MakeHUDElem() {
+        GameArea.removeChild(this.docRef);
+        HUDSpace.appendChild(this.docRef);
+    }
+
+    SetText(txt) {
+        this.text = txt;
+        this.SetModel([this.text, this.style]);
+    }
+
+    SetStyle(css) {
+        this.style = css;
+        this.SetModel([this.text, this.style]);
     }
 }

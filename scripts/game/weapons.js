@@ -4,13 +4,18 @@ var friendlyFire = false;
 
 
 function _RegisterWeapons() {
-
-    new Weapon("DEFAULTMELEE", "melee", 12, 150, 1, Infinity, 0.1, 1, 10, [{
+    new Weapon("DEFAULTMELEE", "melee", 12, 150, Infinity, 0, 10, 1, 10, [{
         name: "attack",
         path: [
             "./assets/snd/weapon/Slash1.ogg",
             "./assets/snd/weapon/Slash2.ogg"
         ],
+        loop: false,
+        vol: 0.6
+    },
+    {
+        name: "dryfire",
+        path: "./assets/snd/weapon/DryFire.ogg",
         loop: false,
         vol: 0.6
     },
@@ -29,6 +34,12 @@ function _RegisterWeapons() {
         vol: 0.6
     },
     {
+        name: "dryfire",
+        path: "./assets/snd/weapon/DryFire.ogg",
+        loop: false,
+        vol: 0.6
+    },
+    {
         name: "reload",
         path: "./assets/snd/weapon/reload_m16.ogg",
         loop: false,
@@ -36,8 +47,7 @@ function _RegisterWeapons() {
     }
     ])
 
-    //same gun different sound just so i dont go coo coo
-    new Weapon("TESTRIFLE2", "range", 24, 1000, 20, 320, 2.6, 4, 5, [{
+    new Weapon("TESTRIFLE2", "range", 24, 1000, 20, 15, 2.6, 4, 5, [{
         name: "attack",
         path: "./assets/snd/weapon/Gunshot2.ogg",
         loop: false,
@@ -71,20 +81,20 @@ class Weapon {
     bulletSpeed;
 
     reloading = false;
-    
+
     range;
     ammoCount;
     ammoCountRes;
-    
+
     curAmmoCount;
     curAmmoCountRes;
-    
+
     LFT = 0;
     fireTime;
     reloadTime;
 
     reloading = false;
-    
+
     constructor(name, type, damage, range, ammoCount, ammoCountRes, fireTime, reloadTime, bulletSpeed, sndSet) {
 
         this.name = name;
@@ -108,30 +118,67 @@ class Weapon {
     }
 
     Shoot(sset) {
-        
-        if (this.LFT + (this.fireTime * 10) > timePassed || this.curAmmoCount == 0) return;
+
+        if (this.LFT + (this.fireTime * 10) > timePassed || this.reloading) return;
+
+        if (this.curAmmoCount == 0) {
+            PlaySound(this.GetWepSoundInfo("dryfire"));
+            return;
+        }
 
         this.LFT = timePassed;
-        this.curAmmoCount --;
+        
+        if (!sset.infiniteAmmo)
+            this.curAmmoCount--;
 
         let sound = this.GetWepSoundInfo("attack");
-
-        new Bullet("bullet" + entCount, sset.CenterOfMass(), [sset.IsToTheLeft(sset.target) ? sset.CenterOfMass()[0] - this.range : sset.CenterOfMass()[0] + this.range, sset.target.CenterOfMass()[1]], 15, sset.team, this.bulletSpeed, this.range, sound)
+        
+        new Bullet("bullet" + entCount, sset.CenterOfMass(), this.calculateTargetPoint(sset.CenterOfMass(), sset.target.CenterOfMass(), this.range), 15, sset.team, this.bulletSpeed, this.range, sound)
     }
 
+    calculateTargetPoint(startPos, targetPos, range) {
+        const dx = targetPos[0] - startPos[0];
+        const dy = targetPos[1] - startPos[1];
+        
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance <= range) {
+            return targetPos;
+        }
+        
+        const scale = range / distance;
+        return [
+            startPos[0] + dx * scale,
+            startPos[1] + dy * scale
+        ];
+    }
+    
+
     async Reload(sset) {
-        if (this.curAmmoCountRes <= 0)
+        if (this.curAmmoCountRes <= 0 || this.reloading || this.curAmmoCount >= this.ammoCount)
             return;
 
         this.reloading = true;
 
         PlaySound(this.GetWepSoundInfo("reload"));
         await s(this.reloadTime);
-        
-        this.curAmmoCountRes = this.curAmmoCountRes - this.curAmmoCount;
-        this.curAmmoCount = this.ammoCount - this.curAmmoCount;
-        
+
+        if (this.curAmmoCountRes > (this.ammoCount - this.curAmmoCount)) {
+            this.curAmmoCountRes = this.curAmmoCountRes - (this.ammoCount - this.curAmmoCount);
+            this.curAmmoCount = this.curAmmoCount + (this.ammoCount - this.curAmmoCount);
+        }
+        else {
+
+            this.curAmmoCount = this.curAmmoCount + this.curAmmoCountRes;
+            this.curAmmoCountRes = 0;
+        } 
+
+
         this.reloading = false;
+    }
+
+    entType() {
+        return "weapon";
     }
 
     GetWepSoundInfo(name) {
@@ -193,7 +240,7 @@ class Bullet extends Entity {
     }
 
     async _BulletCleanup() {
-        
+
         while (this.lifeTime > timePassed) {
             await ms(tickrate);
         }
@@ -207,18 +254,38 @@ class Bullet extends Entity {
         this.Delete();
     }
 
+    _CanHitTarget() {
+
+        if (this.collTarget == null)
+            return false;
+
+        if (this.collTarget.entType() != 'sentient')
+            return false;
+        
+        if (this.collTarget.dead)
+            return false;
+
+        if (this.collTarget.team == this.team && !friendlyFire)
+            return false;
+
+        return true;
+    }
+
     async _CollListener() {
 
         while (true) {
-            if (this.collTarget != undefined && this.collTarget.Damage) {
-                if ((this.collTarget.team != this.team || friendlyFire) && this.collTarget.solid) {
-                    PlaySound(GetSoundInfo("hit"));
-                    this.collTarget.Damage(this.damage)
-                    this.Delete();
-                    return;
-                }
+            if (this._CanHitTarget()) {
+                cl(this.docRef.id + " " + this.collTarget.docRef.id)
+                PlaySound(GetSoundInfo("hit"));
+                this.collTarget.Damage(this.damage)
+                this.Delete();
+                return;
             }
-                await ms(tickrate);
+            await ms(tickrate);
         }
+    }
+
+    entType() {
+        return "bullet";
     }
 }

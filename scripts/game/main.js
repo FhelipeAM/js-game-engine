@@ -21,15 +21,18 @@ function __sysMain() {
     _initControls(player);
 
     const tickSystem = setInterval(() => {
+
         if (gamePaused)
             return;
 
         _Controls();
 
+        UpdateHUD();
+
         entities.forEach((ent) => {
+            _collMain(ent);
             _interpolateMain(ent);
             _gravityMain(ent);
-            _collMain(ent);
         });
 
         sentients.forEach((sent) => {
@@ -44,7 +47,7 @@ function __sysMain() {
     };
 }
 
-function _gravityMain(ent) {
+async function _gravityMain(ent) {
     if (ent.ignoreGravity || ent.iIgnoreGravity) return;
     // console.log(ent.entHeight);
     if (ent.pos[1] + ent.coll[1] < GameSafeSpace.bottom) {
@@ -58,13 +61,16 @@ function _gravityMain(ent) {
     }
 }
 
-function _collMain(ent) {
+async function _collMain(ent) {
     let cs = false;
+
+    if (ent.entType() == "sentient" && ent.dead)
+        return;
 
     for (let i = 0; i < entities.length; i++) {
         var ent2 = entities[i];
 
-        if (ent === ent2) continue;
+        if (ent === ent2 || (ent2.entType() == "sentient" && ent2.dead)) continue;
 
         let entLeft = ent.pos[0];
         let entRight = ent.pos[0] + ent.coll[0];
@@ -88,17 +94,13 @@ function _collMain(ent) {
                 let overlapY = Math.min(entBottom, ent2Bottom) - Math.max(entTop, ent2Top);
 
                 if (overlapX < overlapY) {
-                    if (ent.pos[0] < ent2.pos[0]) {
+                    if (ent.pos[0] <= ent2.pos[0]) {
                         ent.pos[0] = ent2.pos[0] - ent.coll[0];
-                    } else {
-                        ent.pos[0] = ent2.pos[0] + ent2.coll[0];
                     }
                 }
                 else {
-                    if (ent.pos[1] < ent2.pos[1]) {
-                        ent.pos[1] = ent2.pos[1] - ent.coll[1];
-                    } else {
-                        ent.pos[1] = ent2.pos[1] + ent2.coll[1];
+                    if (ent.pos[1] <= ent2.pos[1]) {
+                        ent.pos[1] = ent2.pos[1] - ent2.coll[1];
                     }
                 }
 
@@ -115,7 +117,12 @@ function _collMain(ent) {
     }
 }
 
-function _interpolateMain(ent) {
+async function _interpolateMain(ent) {
+
+    if (ent.linkedTo != null) {
+        ent.Teleport([ent.linkedTo.pos[0] + ent.linkedToOffset[0], ent.linkedTo.pos[1] + ent.linkedToOffset[1]]);
+    }
+
     if (!ent.interpolating) return;
 
     if (!ent.docRef.classList.contains("ltr"))

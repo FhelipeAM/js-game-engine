@@ -3,6 +3,7 @@ var sentients = [];
 class Sentient extends Entity {
     //state
     aiEnabled = true;
+    infiniteAmmo = false;
     oblivious = false;
     notarget = false;
     godMode = false;
@@ -29,7 +30,7 @@ class Sentient extends Entity {
         this.GiveWeapon(GetWeaponByName("DEFAULTMELEE"));
     }
 
-    _think() {
+    async _think() {
 
         if (this.dead)
             return;
@@ -67,14 +68,13 @@ class Sentient extends Entity {
         let closest = null;
         let closestDistance = Infinity;
 
-        for (const se of sentients) {
+        for (let se of sentients) {
 
             if (se === this || !this._validEntToTarget(se)) continue;
 
-            const dist = distance(this, se);
-            if (dist < closestDistance) {
+            if (distance(this, se) < closestDistance) {
                 closest = se;
-                closestDistance = dist;
+                closestDistance = distance(this, se);
             }
         }
 
@@ -88,7 +88,7 @@ class Sentient extends Entity {
         if (this.InRangeToTarget()) {
             if (this.weapons.curAmmoCount > 0) {
                 this.weapons.Shoot(this);
-            } else if (!this.weapons.reloading) {
+            } else {
                 this.weapons.Reload(this);
             }
 
@@ -106,16 +106,19 @@ class Sentient extends Entity {
         sentients.push(this);
     }
 
+    entType() {
+        return "sentient";
+    }
+
     GiveWeapon(weapon) {
         this.weapons = weapon;
     }
-
 
     Damage(amount) {
         if (this.health <= 0 || this.godMode)
             return;
 
-        D_DrawText(this.pos, "-" + amount, "red", 2);
+        D_DrawText([this.pos[0], this.pos[1] - this.coll[1]], "-" + amount, "red", 2);
 
         this.health -= amount;
     }
@@ -135,6 +138,10 @@ class Sentient extends Entity {
         this.StopMove();
         this.solid = false;
 
-        this.docRef.classList.add("dead");
+        if (this.docRef != null)
+            this.docRef.classList.add("dead");
+
+        sentients.splice(sentients.indexOf(this), 1);
+        entities.splice(entities.indexOf(this), 1);
     }
 }

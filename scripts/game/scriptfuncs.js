@@ -1,3 +1,5 @@
+var mousePos = [0, 0];
+
 _StartSys()
 
 function s(s) {
@@ -68,19 +70,16 @@ async function D_DrawText(start, text, acolor, duration) {
 
 //GetMousePos
 // document.addEventListener("mousedown", async (event) => {
-
-//     if (!devMode) return;
-
-//     let valX = (event.clientX + window.scrollX);
-//     let valy = (event.clientY + window.scrollY);
-
-//     cl("Mouse X: " + valX + ", Mouse Y: " + valy);
     
-//     var ClickRef = new Entity("mousePos"+entCount, [valX, valy], [100, 100], "red")
+//     var ClickRef = new Entity("mousePos"+entCount, mousePos, [100, 100], "red")
 //     ClickRef.Weight = 10;
 //     ClickRef.ignoreGravity = true;
 //     ClickRef.solid = false;
 // })
+
+document.addEventListener("mousemove", async (event) => {
+    GetMousePos(event)
+})
 
 document.addEventListener("keypress", async (event) => {
 
@@ -90,6 +89,14 @@ document.addEventListener("keypress", async (event) => {
         gamePaused = !gamePaused;
     }
 })
+
+function GetMousePos(event) {
+
+    let valX = (event.clientX + window.scrollX);
+    let valY = (event.clientY + window.scrollY);
+    
+    mousePos = [valX, valY];
+}
 
 async function _StartSys() {
     await ms(tickrate);

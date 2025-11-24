@@ -11,10 +11,14 @@ class Entity {
     weight = 0;
     mdl = "";
     docRef;
-
+    
     //untweakable
     pos = [0, 0];
     end = [0, 0];
+    
+    linkedTo = null;
+    linkedToOffset = [0, 0];
+
     iIgnoreGravity = false;
     interpolating = false;
     interpos = [0, 0];
@@ -74,7 +78,7 @@ class Entity {
         this.docRef.style.marginTop = pos[1] + "px";
     }
 
-    MoveTo(end, gravity) {
+    async MoveTo(end, gravity) {
         if (end == this.pos)
             return;
 
@@ -156,6 +160,10 @@ class Entity {
                 this.docRef.style.zIndex = dat["index"];
             }
 
+            if("opacity" in dat) {
+                this.docRef.style.opacity = dat["opacity"];
+            }
+
         } else {
             this.docRef.style.backgroundColor = `${this.mdl}`
             this.docRef.style.backgroundImage = `url()`
@@ -188,6 +196,21 @@ class Entity {
     
     }
 
+    async linkTo(ent2, offset) {
+        this.linkedTo = ent2;
+        if (offset != null)
+            this.linkedToOffset = offset;
+    }
+    
+    async unlink() {
+        this.linkedTo = null;
+        this.linkedToOffset = [0, 0];
+    }
+    
+    entType() {
+        return "entity";
+    }
+
     CenterOfMass() {
         return [this.pos[0] + (this.coll[0] / 2), this.pos[1] + (this.coll[1] / 2)];
     }
@@ -198,7 +221,6 @@ class Entity {
 
     IsAbove(ent2) {
         let v1 = this.CenterOfMass()[1] > ent2.CenterOfMass()[1];
-        cl(v1)
         return v1;
     }
 
