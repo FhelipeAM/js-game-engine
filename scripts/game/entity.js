@@ -1,7 +1,7 @@
 var entities = [];
 entCount = 0;
 
-const UOF = "px"; // unit of position
+const UOP = "px"; // unit of position
 const UOS = "px"; // unit of size
 
 class Entity {
@@ -77,8 +77,8 @@ class Entity {
         this.interpos = this.pos;
 
         this.interpolating = false;
-        this.docRef.style.marginLeft = pos[0] + UOF;
-        this.docRef.style.marginTop = pos[1] + UOF;
+        this.docRef.style.marginLeft = pos[0] + UOP;
+        this.docRef.style.marginTop = pos[1] + UOP;
     }
 
     async MoveTo(end, gravity) {
@@ -103,8 +103,8 @@ class Entity {
     SetSize(size) {
         this.coll = size;
 
-        this.docRef.style.width = this.coll[0] + UOF;
-        this.docRef.style.height = this.coll[1] + UOF;
+        this.docRef.style.width = this.coll[0] + UOP;
+        this.docRef.style.height = this.coll[1] + UOP;
     }
 
     SetModel(mdlstr) {
@@ -118,9 +118,7 @@ class Entity {
         else if (Array.isArray(mdlstr)) {
             let dat = this.mdl[1];
             this.docRef.innerText = `${this.mdl[0]}`
-            this.docRef.style.backgroundColor = `transparent`
             this.docRef.style.backgroundImage = `url()`
-            this.docRef.style.display = `flex`
 
             switch (dat["alignY"]) {
                 default:
@@ -143,17 +141,44 @@ class Entity {
                 case "center":
                     this.docRef.style.justifyContent = `center`
                     break;
+                case "between":
+                    this.docRef.style.justifyContent = `space-between`
+                    break;
+                case "around":
+                    this.docRef.style.justifyContent = `space-around`
+                    break;
                 case "right":
                     this.docRef.style.justifyContent = `end`
                     break;
             }
 
+            if("position" in dat) {
+                this.docRef.style.position = dat["position"];
+            }
+
+            if("BGColor" in dat) {
+                this.docRef.style.backgroundColor = dat["BGColor"];
+            } else {
+                this.docRef.style.backgroundColor = "transparent";
+            }
+
+            if("display" in dat) {
+                this.docRef.style.display = dat["display"];
+            } else {
+                this.docRef.style.display = "flex";
+            }
+
             if("color" in dat) {
                 this.docRef.style.color = dat["color"];
             }
+            
+            if("textAlign" in dat) {
+                this.docRef.style.textAlign = dat["textAlign"];
+            }
+
 
             if("fontSize" in dat) {
-                this.docRef.style.fontSize = dat["fontSize"] + UOF;
+                this.docRef.style.fontSize = dat["fontSize"] + UOP;
             }
 
             if("fontFam" in dat) {
@@ -169,7 +194,11 @@ class Entity {
             }
 
             if("padding" in dat) {
-                this.docRef.style.padding = dat["padding"] + UOF;
+                this.docRef.style.padding = dat["padding"] + UOP;
+            }
+
+            if("gap" in dat) {
+                this.docRef.style.gap = dat["gap"] + UOP;
             }
 
             if("border" in dat) {
@@ -186,8 +215,9 @@ class Entity {
                     return;
                 }
 
-                this.docRef.style.borderWidth = dat["border"]["borderSize"] + UOF;
+                this.docRef.style.borderWidth = dat["border"]["borderSize"] + UOP;
                 this.docRef.style.borderStyle = dat["border"]["borderStyle"];
+                this.docRef.style.borderRadius = dat["border"]["borderRadius"] + UOP;
 
             }
 

@@ -153,7 +153,7 @@ class Weapon {
 
         let sound = this.GetWepSoundInfo("attack");
         
-        new Bullet("bullet" + entCount, sset.CenterOfMass(), this.calculateTargetPoint(sset.CenterOfMass(), sset.target.CenterOfMass(), this.range), 15, sset.team, this.bulletSpeed, this.range, sound)
+        new Bullet("bullet" + entCount, sset.CenterOfMass(), this.calculateTargetPoint(sset.CenterOfMass(), sset.target.CenterOfMass(), this.range), this.damage, sset.team, this.bulletSpeed, this.range, sound)
     }
 
     calculateTargetPoint(startPos, targetPos, range) {

@@ -1,3 +1,5 @@
+var HudElems = [];
+
 class BaseUIElem extends Entity {
     
     HUDElem = false;
@@ -6,13 +8,26 @@ class BaseUIElem extends Entity {
     constructor(pos, size, model, isHUDElem) {
         super("UIElem" + entCount, pos, size, model);
 
-        this.trigger = false;
+        this.style = model;
 
-        if (isHUDElem)
+        this.trigger = false;
+        this.ignoreGravity = true;
+        this.solid = false;
+
+        if (isHUDElem) {
             this.MakeHUDElem();
+            this.adjustHUDElemScale();
+            this.RegisterHUDElem();
+        }
     }
 
     async FadeOut(time) {
+
+        if (time <= 0) {
+            console.warn("Invalid time specified for FadeOut()");
+            return;
+        }
+
         this.docRef.style.opacity = 1;
         let opacity = 1;
         let startTime = Date.now();
@@ -31,6 +46,12 @@ class BaseUIElem extends Entity {
     }
 
     async FadeIn(time) {
+
+        if (time <= 0) {
+            console.warn("Invalid time specified for FadeIn()");
+            return;
+        }
+
         this.docRef.style.opacity = 0;
         let opacity = 0;
         let startTime = Date.now();
@@ -55,22 +76,36 @@ class BaseUIElem extends Entity {
         this.HUDElem = true;
     }
 
+    adjustHUDElemScale() {
+        if (this.docRef.parentNode != HUDSpace) {
+            cl("it wasn't");
+            return;
+        }
+
+        this.Teleport([((window.innerWidth - this.coll[0]) / 2) + this.pos[0], ((window.innerHeight - this.coll[1]) /2) + this.pos[1]]);
+    }
+
+    revertHUDElemScale() {
+        
+        this.Teleport([this.pos[0] - ((window.innerWidth - this.coll[0]) / 2), this.pos[1] - ((window.innerHeight - this.coll[1]) /2)]);
+    }
+
     SetStyle(css) {
         this.style = css;
         this.SetModel([this.text, this.style]);
+    }
+
+    RegisterHUDElem() {
+        HudElems.push(this);
     }
 }
 
 class GameText extends BaseUIElem {
     text;
 
-    constructor(pos, text, style, isHUDElem, size) {
+    constructor(pos, size, text, style, isHUDElem) {
         super(pos, size == undefined ? [100, 100] : size, [text, style], isHUDElem);
         this.text = text;
-        this.style = style;
-
-        this.ignoreGravity = true;
-        this.solid = false;
     }
     
     entType() {
@@ -85,16 +120,15 @@ class GameText extends BaseUIElem {
 
 class GameContainer extends BaseUIElem {
     
-    constructor(pos, size, alignment, isHUDElem) {
-        super(pos, size, ["model", { 
-            alignY: alignment[1],
-            alignX: alignment[0]
-        }], isHUDElem);
+    constructor(pos, size, style, isHUDElem) {
+        super(pos, size, ["", style], isHUDElem);
     }
 
     AttachToMe(elem) {
-        elem.docRef.parentNode.removeChild(elem);
-        this.appendChild(elem);
+        elem.docRef.parentNode.removeChild(elem.docRef);
+        this.docRef.appendChild(elem.docRef);
+        
+        elem.revertHUDElemScale();
     }
 
     entType() {
@@ -106,8 +140,8 @@ class GameButton extends GameText {
     
     action;
 
-    constructor(pos, size, text, action, isHUDElem, style) {
-        super(pos, text, style, isHUDElem, size);
+    constructor(pos, size, text, action, style, isHUDElem) {
+        super(pos, size, text, style, isHUDElem);
 
         this.OverrideBtnAction(action);
 

@@ -1,3 +1,4 @@
+main();
 
 async function main() {
     var test = new Sentient("teste2", [1000, 10], [100, 100], "./assets/img/testent.jpg", "axis", false);
@@ -22,7 +23,7 @@ async function main() {
 
     await s(1);
     
-    player.health = 0;
+    // player.health = 0;
 
     // infloopTest();
 }

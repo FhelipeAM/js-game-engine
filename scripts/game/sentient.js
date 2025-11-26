@@ -115,6 +115,7 @@ class Sentient extends Entity {
     }
 
     Damage(amount) {
+        
         if (this.health <= 0 || this.godMode)
             return;
 

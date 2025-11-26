@@ -1,7 +1,5 @@
 var mousePos = [0, 0];
 
-_StartSys()
-
 function s(s) {
     return new Promise(resolve => setTimeout(resolve, s*1000));
 }
@@ -51,15 +49,21 @@ async function D_DrawLine(start, end, color, duration) {
 }
 
 async function D_DrawText(start, text, acolor, duration) {
+
     if (!devMode) return;
-    var text = new GameText(start, text, 
+
+    var text = new GameText(
+        start, 
+        [100, 100],
+        text, 
         {
             alignX: "center",
             alignY: "center",
             color: acolor,
             fontSize: 64,
             index: 40
-        });
+        }, 
+        false);
 
     await s(duration);
 
@@ -81,13 +85,18 @@ document.addEventListener("mousemove", async (event) => {
     GetMousePos(event)
 })
 
-document.addEventListener("keypress", async (event) => {
 
-    if (!devMode) return;
+//Has to be done this way because otherwise we can't unpause
+RegisterInput("h", "PauseGame", () => {});
+document.addEventListener("keyup", async (event) => {
+    
+    if (getActionFromKeybind(event.key).action == "PauseGame") {
 
-    if (event.key == "f") {
+        if (!devMode) return;
+
         gamePaused = !gamePaused;
     }
+
 })
 
 function GetMousePos(event) {
@@ -100,5 +109,4 @@ function GetMousePos(event) {
 
 async function _StartSys() {
     await ms(tickrate);
-    main();
 }

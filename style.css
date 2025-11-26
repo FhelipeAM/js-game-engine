@@ -13,15 +13,21 @@ body {
 
 #player {
     border-radius: 50%;
-
 }
 
 #HUD {
     position: fixed;
-    height: 100%;
-    width: 100%;
+
+    display: flex;
+
+    height: 100vh;
+    width: 100vw;
 
     z-index: 10;
+
+    overflow: hidden;
+
+    
 }
 
 .entity {
@@ -44,17 +50,6 @@ body {
     width: 10000px;
 
     border: 2px solid red;
-}
-
-.testref {
-    position: absolute;
-
-    height: 100px;
-    width: 100px;
-    background-color: red;
-
-    margin-left: 300px;
-    margin-top: 120px;
 }
 
 .dead {
