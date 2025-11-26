@@ -71,6 +71,10 @@ body {
     z-index: -3;
 }
 
+.GameButton {
+    cursor: pointer;
+}
+
 .ltr {
     transform: scaleX(1);
 }

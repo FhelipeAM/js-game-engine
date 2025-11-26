@@ -1,5 +1,43 @@
 disableControls = false;
 
+var working = true;
+
+var StopTheCount = new GameButton(
+    [1200, 300],
+    [300, 500],
+    "Stop the count", 
+    TestButton,
+    true,
+    {
+        color: "green", 
+        alignX: "center", 
+        alignY: "center", 
+        fontSize: 128, 
+        border: {
+            borderImg: "green",
+            borderSize: 4,
+            borderStyle: "solid"
+        }
+    }
+)
+
+async function TestButton() {
+
+    StopTheCount.Delete();
+
+    cl("clickerd");
+    
+    RegisterSound("song_test", "assets/snd/music/sad_song1_faststart.mp3", false, 1.0);
+
+    working = false;
+
+    player.godMode = true;
+    player.solid = false;
+    player.notarget = true;
+
+    PlaySound(GetSoundInfo("song_test"));
+} 
+
 async function main() {
     
     player.Teleport([200, 500]);
@@ -11,28 +49,15 @@ async function main() {
     
     await player.OnGround();
 
-    funnyloop();
-
     entloop();
     entloop2();
 
-    player.GiveWeapon(GetWeaponByName("TESTRIFLE2"));
-}
-
-async function funnyloop() {
-
-    var test = new GameText(player.pos, "Test", {color: "red", alignX: "center", alignY: "center", fontSize: 128})
-
-    while (true) {
-        await ms(1);
-
-        test.SetText(sentients.length);
-    }
+    player.GiveWeapon(GetWeaponByName("GODRIFLE"));
 }
 
 async function entloop() {
 
-    while (true) {
+    while (working) {
             
         var testcol5 = new Sentient("testref_1"+entCount, [2000, 300], [100, 100], "./assets/img/testent.jpg", "team3", true)
         // testcol5.GiveWeapon(GetWeaponByName("TESTRIFLE"));
@@ -45,7 +70,7 @@ async function entloop() {
 
 async function entloop2() {
 
-    while (true) {
+    while (working) {
                 
         var testcol4 = new Sentient("testref_2"+entCount, [0, 300], [100, 100], "./assets/img/testent2.png", "axis", true);
         // testcol4.GiveWeapon(GetWeaponByName("TESTRIFLE2"));

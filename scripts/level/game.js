@@ -21,8 +21,7 @@ async function main() {
     test2.movespeed = 0.55;
 
     await s(1);
-
-    console.log("die")
+    
     player.health = 0;
 
     // infloopTest();

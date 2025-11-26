@@ -14,12 +14,6 @@ function _RegisterWeapons() {
         vol: 0.6
     },
     {
-        name: "dryfire",
-        path: "./assets/snd/weapon/DryFire.ogg",
-        loop: false,
-        vol: 0.6
-    },
-    {
         name: "reload",
         path: "",
         loop: false,
@@ -50,6 +44,32 @@ function _RegisterWeapons() {
     new Weapon("TESTRIFLE2", "range", 24, 1000, 20, 15, 2.6, 4, 5, [{
         name: "attack",
         path: "./assets/snd/weapon/Gunshot2.ogg",
+        loop: false,
+        vol: 0.6
+    },
+    {
+        name: "dryfire",
+        path: "./assets/snd/weapon/DryFire.ogg",
+        loop: false,
+        vol: 0.6
+    },
+    {
+        name: "reload",
+        path: "./assets/snd/weapon/reload_m16.ogg",
+        loop: false,
+        vol: 0.2
+    }
+    ])
+
+    new Weapon("GODRIFLE", "range", 44, 10000, Infinity, 320, 2.2, 4, 5, [{
+        name: "attack",
+        path: "./assets/snd/weapon/Gunshot2.ogg",
+        loop: false,
+        vol: 0.6
+    },
+    {
+        name: "dryfire",
+        path: "./assets/snd/weapon/DryFire.ogg",
         loop: false,
         vol: 0.6
     },
@@ -275,7 +295,6 @@ class Bullet extends Entity {
 
         while (true) {
             if (this._CanHitTarget()) {
-                cl(this.docRef.id + " " + this.collTarget.docRef.id)
                 PlaySound(GetSoundInfo("hit"));
                 this.collTarget.Damage(this.damage)
                 this.Delete();

@@ -1,6 +1,9 @@
 var entities = [];
 entCount = 0;
 
+const UOF = "px"; // unit of position
+const UOS = "px"; // unit of size
+
 class Entity {
     //movement
     movespeed = 1;
@@ -8,6 +11,7 @@ class Entity {
     coll = [0, 0];
     collTarget;
     solid = true;
+    trigger = true;
     weight = 0;
     mdl = "";
     docRef;
@@ -47,7 +51,6 @@ class Entity {
     SpawnEntity(id) {
         var stub = document.createElement("div");
 
-        // console.log(id);
         stub.setAttribute("id", id);
         stub.classList.add("entity");
 
@@ -59,8 +62,8 @@ class Entity {
     MakeEntityFromElement(id) {
         this.docRef = document.getElementById(id);
 
-        this.docRef.style.width = this.coll[0] + "px";
-        this.docRef.style.height = this.coll[1] + "px";
+        this.docRef.style.width = this.coll[0] + UOS;
+        this.docRef.style.height = this.coll[1] + UOS;
     }
 
     RegisterEntity() {
@@ -74,8 +77,8 @@ class Entity {
         this.interpos = this.pos;
 
         this.interpolating = false;
-        this.docRef.style.marginLeft = pos[0] + "px";
-        this.docRef.style.marginTop = pos[1] + "px";
+        this.docRef.style.marginLeft = pos[0] + UOF;
+        this.docRef.style.marginTop = pos[1] + UOF;
     }
 
     async MoveTo(end, gravity) {
@@ -100,11 +103,12 @@ class Entity {
     SetSize(size) {
         this.coll = size;
 
-        this.docRef.style.width = this.coll[0] + "px";
-        this.docRef.style.height = this.coll[1] + "px";
+        this.docRef.style.width = this.coll[0] + UOF;
+        this.docRef.style.height = this.coll[1] + UOF;
     }
 
     SetModel(mdlstr) {
+
         this.mdl = mdlstr
 
         if (mdlstr.includes('/')) {
@@ -149,7 +153,7 @@ class Entity {
             }
 
             if("fontSize" in dat) {
-                this.docRef.style.fontSize = dat["fontSize"] + "px";
+                this.docRef.style.fontSize = dat["fontSize"] + UOF;
             }
 
             if("fontFam" in dat) {
@@ -162,6 +166,29 @@ class Entity {
 
             if("opacity" in dat) {
                 this.docRef.style.opacity = dat["opacity"];
+            }
+
+            if("padding" in dat) {
+                this.docRef.style.padding = dat["padding"] + UOF;
+            }
+
+            if("border" in dat) {
+
+                if (typeof dat["border"]["borderImg"] === 'string') {
+
+                    if (dat["border"]["borderImg"].includes('/'))
+                        this.docRef.style.borderImage = dat["border"]["borderImg"];
+                    else
+                        this.docRef.style.borderColor = dat["border"]["borderImg"];
+
+                } else {
+                    console.warn("Border for object " + this.docRef.id + " was not properly setup. Ignoring");
+                    return;
+                }
+
+                this.docRef.style.borderWidth = dat["border"]["borderSize"] + UOF;
+                this.docRef.style.borderStyle = dat["border"]["borderStyle"];
+
             }
 
         } else {
@@ -188,7 +215,7 @@ class Entity {
 
         entities.splice(entities.indexOf(this), 1);
     
-        GameArea.removeChild(this.docRef);
+        this.docRef.parentNode.removeChild(this.docRef);
         this.docRef.remove();
         this.docRef = null;
 

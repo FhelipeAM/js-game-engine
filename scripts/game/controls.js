@@ -33,7 +33,7 @@ var KeyBinds = [
 
 function _initControls(target) {
     movementTarget = target;
-    movementTarget.target = new Entity("mousetarget", [0, 0], [1, 1], ["a", { opacity: 1 }])
+    movementTarget.target = new Entity("mousetarget", [0, 0], [1, 1], ["", { opacity: 0 }])
     movementTarget.target.ignoreGravity = true;
     movementTarget.target.solid = false;
 
@@ -50,8 +50,6 @@ async function _Controls() {
     let diry = movementTarget.pos[1]
     
     pressedKeys.forEach(key => {
-
-        // console.log(getActionFromKeybind(key))
         if (movementTarget.pos[0] < GameSafeSpace.right - movementTarget.coll[1]) {
             if (getActionFromKeybind(key) == "moveRight") {
                 dirx = movementTarget.pos[0] + 1;
@@ -85,7 +83,6 @@ async function _Controls() {
 }
 
 document.addEventListener("keypress", (key) => {
-    // console.log(key.key)
     if (!pressedKeys.includes(key.key))
         pressedKeys.push(key.key);
 });
@@ -95,7 +92,6 @@ document.addEventListener("keyup", (key) => {
 });
 
 function getActionFromKeybind(bind) {
-    // console.log(bind)
     let actionStub = "invalid";
 
     KeyBinds.forEach((elem) => {

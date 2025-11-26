@@ -49,7 +49,7 @@ function __sysMain() {
 
 async function _gravityMain(ent) {
     if (ent.ignoreGravity || ent.iIgnoreGravity) return;
-    // console.log(ent.entHeight);
+    
     if (ent.pos[1] + ent.coll[1] < GameSafeSpace.bottom) {
         ent.docRef.style.marginTop = ent.pos[1] + "px";
         ent.pos[1]++;
@@ -85,11 +85,11 @@ async function _collMain(ent) {
         if (entLeft < ent2Right && entRight > ent2Left &&
             entTop < ent2Bottom && entBottom > ent2Top) {
 
-            if (!ent.solid) {
+            if (!ent.solid && ent.trigger) {
                 cs = true;
                 ent.collTarget = ent2;
                 return;
-            } else if (ent2.solid) {
+            } else if (ent2.solid && ent.solid) {
                 let overlapX = Math.min(entRight, ent2Right) - Math.max(entLeft, ent2Left);
                 let overlapY = Math.min(entBottom, ent2Bottom) - Math.max(entTop, ent2Top);
 

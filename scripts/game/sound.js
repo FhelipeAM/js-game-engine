@@ -29,8 +29,10 @@ function GetSoundInfo(name) {
 
 function PlaySound(soundInfo) {
 
-    if (soundInfo.path == null || soundInfo.path == "")
+    if (soundInfo.path == null || soundInfo.path == "") {
+        console.warn("Incorrect use of PlaySound(), check parameters and make sure the sound was properly registered.");
         return;
+    }
 
     var audio = new Audio(PickRandomFromArray(soundInfo.path));
     audio.volume = soundInfo.vol;

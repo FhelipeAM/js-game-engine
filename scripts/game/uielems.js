@@ -1,18 +1,15 @@
-class GameText extends Entity {
-    text;
+class BaseUIElem extends Entity {
+    
+    HUDElem = false;
     style;
 
-    constructor(pos, text, style) {
-        super("text" + entCount, pos, [100, 100], [text, style]);
-        this.text = text;
-        this.style = style;
+    constructor(pos, size, model, isHUDElem) {
+        super("UIElem" + entCount, pos, size, model);
 
-        this.ignoreGravity = true;
-        this.solid = false;
-    }
-    
-    entType() {
-        return "gametext";
+        this.trigger = false;
+
+        if (isHUDElem)
+            this.MakeHUDElem();
     }
 
     async FadeOut(time) {
@@ -54,15 +51,78 @@ class GameText extends Entity {
     MakeHUDElem() {
         GameArea.removeChild(this.docRef);
         HUDSpace.appendChild(this.docRef);
+
+        this.HUDElem = true;
+    }
+
+    SetStyle(css) {
+        this.style = css;
+        this.SetModel([this.text, this.style]);
+    }
+}
+
+class GameText extends BaseUIElem {
+    text;
+
+    constructor(pos, text, style, isHUDElem, size) {
+        super(pos, size == undefined ? [100, 100] : size, [text, style], isHUDElem);
+        this.text = text;
+        this.style = style;
+
+        this.ignoreGravity = true;
+        this.solid = false;
+    }
+    
+    entType() {
+        return "gametext";
     }
 
     SetText(txt) {
         this.text = txt;
         this.SetModel([this.text, this.style]);
     }
+}
 
-    SetStyle(css) {
-        this.style = css;
-        this.SetModel([this.text, this.style]);
+class GameContainer extends BaseUIElem {
+    
+    constructor(pos, size, alignment, isHUDElem) {
+        super(pos, size, ["model", { 
+            alignY: alignment[1],
+            alignX: alignment[0]
+        }], isHUDElem);
+    }
+
+    AttachToMe(elem) {
+        elem.docRef.parentNode.removeChild(elem);
+        this.appendChild(elem);
+    }
+
+    entType() {
+        return "gamecontainer";
+    }
+}
+
+class GameButton extends GameText {
+    
+    action;
+
+    constructor(pos, size, text, action, isHUDElem, style) {
+        super(pos, text, style, isHUDElem, size);
+
+        this.OverrideBtnAction(action);
+
+        this.docRef.classList.add("GameButton");
+
+        this.docRef.addEventListener("click", async (event) => {
+            this.action();
+        });
+    }
+
+    OverrideBtnAction(newAction) {
+        this.action = newAction;
+    }
+
+    entType() {
+        return "gamebutton";
     }
 }
