@@ -12,7 +12,7 @@ class Entity {
     collTarget;
     solid = true;
     trigger = true;
-    weight = 0;
+    weight = 1;
     mdl = "";
     docRef;
     
@@ -26,6 +26,7 @@ class Entity {
     iIgnoreGravity = false;
     interpolating = false;
     interpos = [0, 0];
+    shouldFall = true;
     falling = false;
     midAir = false;
 
@@ -33,15 +34,16 @@ class Entity {
 
         this.mdl = img;
 
-        this.coll = ppr;
-
         if (document.getElementById(id) != undefined) {
             this.MakeEntityFromElement(id);
         } else {
             this.SpawnEntity(id);
         }
 
-        this.SetModel(img);
+        this.SetSize(ppr);
+
+        if (img != undefined)
+            this.SetModel(img);
 
         this.RegisterEntity();
 
@@ -61,9 +63,6 @@ class Entity {
 
     MakeEntityFromElement(id) {
         this.docRef = document.getElementById(id);
-
-        this.docRef.style.width = this.coll[0] + UOS;
-        this.docRef.style.height = this.coll[1] + UOS;
     }
 
     RegisterEntity() {
@@ -71,12 +70,19 @@ class Entity {
         entities.push(this);
     }
 
-    Teleport(pos) {
-        this.pos = pos;
-        this.end = pos;
-        this.interpos = this.pos;
+    Teleport(pos, stopMove) {
 
-        this.interpolating = false;
+        if (stopMove == undefined)
+            stopMove = false;
+
+        this.pos = pos;
+        this.interpos = this.pos;
+        
+        if (stopMove) {
+            this.end = pos;
+            this.interpolating = false;
+        }
+
         this.docRef.style.marginLeft = pos[0] + UOP;
         this.docRef.style.marginTop = pos[1] + UOP;
     }
@@ -103,8 +109,15 @@ class Entity {
     SetSize(size) {
         this.coll = size;
 
-        this.docRef.style.width = this.coll[0] + UOP;
-        this.docRef.style.height = this.coll[1] + UOP;
+        if (typeof this.coll[0] != "string")
+            this.docRef.style.width = this.coll[0] + UOS;
+        else 
+            this.docRef.style.width = this.coll[0];
+
+        if (typeof this.coll[1] != "string")
+            this.docRef.style.height = this.coll[1] + UOS;
+        else
+            this.docRef.style.height = this.coll[1];
     }
 
     SetModel(mdlstr) {
@@ -116,6 +129,7 @@ class Entity {
             this.docRef.style.backgroundColor = `transparent`
         }
         else if (Array.isArray(mdlstr)) {
+
             let dat = this.mdl[1];
             this.docRef.innerText = `${this.mdl[0]}`
             this.docRef.style.backgroundImage = `url()`
@@ -152,54 +166,50 @@ class Entity {
                     break;
             }
 
-            if("position" in dat) {
+            if("position" in dat)
                 this.docRef.style.position = dat["position"];
-            }
-
-            if("BGColor" in dat) {
+            
+            if("BGColor" in dat)
                 this.docRef.style.backgroundColor = dat["BGColor"];
-            } else {
+            else
                 this.docRef.style.backgroundColor = "transparent";
-            }
-
+            
             if("display" in dat) {
                 this.docRef.style.display = dat["display"];
-            } else {
+
+                if (dat["display"] == "flex")
+                    if ("flexDir" in dat)
+                        this.docRef.style.flexDirection = dat["flexDir"];
+
+            } else
                 this.docRef.style.display = "flex";
-            }
 
-            if("color" in dat) {
+            if("color" in dat)
                 this.docRef.style.color = dat["color"];
-            }
             
-            if("textAlign" in dat) {
+            if("textAlign" in dat)
                 this.docRef.style.textAlign = dat["textAlign"];
-            }
 
+            if("fontSize" in dat)
+                if (typeof dat["fontSize"] == "string")
+                    this.docRef.style.fontSize = dat["fontSize"];
+                else
+                    this.docRef.style.fontSize = dat["fontSize"] + UOP;
 
-            if("fontSize" in dat) {
-                this.docRef.style.fontSize = dat["fontSize"] + UOP;
-            }
-
-            if("fontFam" in dat) {
+            if("fontFam" in dat)
                 this.docRef.style.fontFamily = dat["fontFam"];
-            }
 
-            if("index" in dat) {
+            if("index" in dat)
                 this.docRef.style.zIndex = dat["index"];
-            }
 
-            if("opacity" in dat) {
+            if("opacity" in dat)
                 this.docRef.style.opacity = dat["opacity"];
-            }
 
-            if("padding" in dat) {
+            if("padding" in dat)
                 this.docRef.style.padding = dat["padding"] + UOP;
-            }
 
-            if("gap" in dat) {
+            if("gap" in dat)
                 this.docRef.style.gap = dat["gap"] + UOP;
-            }
 
             if("border" in dat) {
 
@@ -211,7 +221,8 @@ class Entity {
                         this.docRef.style.borderColor = dat["border"]["borderImg"];
 
                 } else {
-                    console.warn("Border for object " + this.docRef.id + " was not properly setup. Ignoring");
+                    if (devMode)
+                        console.warn("Border for object " + this.docRef.id + " was not properly setup. Ignoring");
                     return;
                 }
 
@@ -272,13 +283,12 @@ class Entity {
         return [this.pos[0] + (this.coll[0] / 2), this.pos[1] + (this.coll[1] / 2)];
     }
 
-    IsToTheLeft(ent2) {
+    IsToTheRight(ent2) {
         return this.CenterOfMass()[0] > ent2.CenterOfMass()[0];
     }
 
     IsAbove(ent2) {
-        let v1 = this.CenterOfMass()[1] > ent2.CenterOfMass()[1];
-        return v1;
+        return this.CenterOfMass()[1] < ent2.CenterOfMass()[1];
     }
 
     async Collide() {

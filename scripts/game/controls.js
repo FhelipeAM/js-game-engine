@@ -9,11 +9,17 @@ const jumpDelay = 0.1;
 
 var KeyBinds = [];
 
+var dirx = 0;
+var diry = 0;
+
 function _initControls(target) {
     movementTarget = target;
     movementTarget.target = new Entity("mousetarget", [0, 0], [1, 1], ["", { opacity: 0 }])
     movementTarget.target.ignoreGravity = true;
     movementTarget.target.solid = false;
+
+    dirx = movementTarget.pos[0];
+    diry = movementTarget.pos[1];
 
     _baseMovement();
     
@@ -23,39 +29,37 @@ function _baseMovement() {
     
     RegisterInput("d", "moveRight", () => {
 
-        let dirx = movementTarget.pos[0]
-        let diry = movementTarget.pos[1]
-
         if (movementTarget.pos[0] < GameSafeSpace.right - movementTarget.coll[1]) {
             dirx = movementTarget.pos[0] + 1;
         }
         movementTarget.MoveTo([dirx, diry], true);
+
+        dirx = movementTarget.pos[0];
     });
 
     RegisterInput("w", "jump", async () => {
-        let dirx = movementTarget.pos[0]
-        let diry = movementTarget.pos[1]
         
         let jmpcheck = lastJumpTime + (jumpDelay * 1000) < timePassed;
 
         if (!movementTarget.midAir && jmpcheck) {
             lastJumpTime = timePassed;
-            diry = movementTarget.pos[1] - 100;
+            diry = movementTarget.pos[1] - 120;
             
             movementTarget.Teleport([dirx, diry]);
+
         }
+
     });
 
     RegisterInput("a", "moveLeft", () => {
-
-        let dirx = movementTarget.pos[0]
-        let diry = movementTarget.pos[1]
 
         if (movementTarget.pos[0] > GameSafeSpace.left) {
             dirx = movementTarget.pos[0] - 1;
         }
 
         movementTarget.MoveTo([dirx, diry], true);
+
+        dirx = movementTarget.pos[0];
     });
 
     RegisterInput(" ", "shoot", () => {
@@ -68,12 +72,59 @@ function _baseMovement() {
     });
 }
 
+async function _Controls() {
+
+    _CameraScroll();
+
+    if (disableControls || movementTarget.dead)
+        return;
+
+    diry = movementTarget.pos[1];
+
+    pressedKeys.forEach(pKey => {
+
+        let stub = getActionFromKeybind(pKey);
+
+        if (IsValidAction(stub.action)) {
+            stub.func();
+        }
+    })
+}
+
+function _CameraScroll() {
+
+    if (freecam)
+        return;
+
+    const entX = movementTarget.CenterOfMass()[0];
+    const entY = movementTarget.CenterOfMass()[1];
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const scrollX = entX - viewportWidth / 2;
+    const scrollY = entY - viewportHeight / 2;
+
+    const maxScrollX = document.body.scrollWidth - viewportWidth;
+    const maxScrollY = document.body.scrollHeight - viewportHeight;
+
+    const clampedX = Math.max(0, Math.min(scrollX, maxScrollX));
+    const clampedY = Math.max(0, Math.min(scrollY, maxScrollY));    
+
+    window.scrollTo({
+        left: clampedX,
+        top: clampedY,
+        // behavior: 'smooth'
+    });
+}
+
 function RegisterInput(aKey, aAction, aFunc) {
 
     let checkStub = getActionFromKeybind(aKey);
 
     if (IsValidAction(checkStub.action)) {
-        console.warn("An action is already bound to this key, ignoring.")
+        if (devMode)
+            console.warn("An action is already bound to this key, ignoring.")
         return;
     }
 
@@ -91,7 +142,8 @@ function ChangeKeyForAction(actionName, newKey) {
     let stub = getActionByName(actionName);
     
     if (!IsValidAction(stub.action)) {
-        console.warn("Action is not valid.")
+        if (devMode)
+            console.warn("Action is not valid.")
         return;
     }
 
@@ -103,38 +155,13 @@ function RemoveInput(actionName) {
     let stub = getActionByName(actionName);
     
     if (!IsValidAction(stub.action)) {
-        console.warn("Action is not valid.")
+        if (devMode)
+            console.warn("Action is not valid.")
         return;
     }
 
     KeyBinds.splice(KeyBinds.indexOf(stub), 1);
 }
-
-async function _Controls() {
-
-    _CameraScroll();
-
-    if (disableControls || movementTarget.dead)
-        return;
-
-    pressedKeys.forEach(pKey => {
-
-        let stub = getActionFromKeybind(pKey);
-
-        if (IsValidAction(stub.action)) {
-            stub.func();
-        }
-    })
-}
-
-document.addEventListener("keypress", (key) => {
-    if (!pressedKeys.includes(key.key))
-        pressedKeys.push(key.key);
-});
-
-document.addEventListener("keyup", (key) => {
-    pressedKeys.splice(pressedKeys.indexOf(key.key), 1);
-});
 
 function getActionFromKeybind(bind) {
 
@@ -199,7 +226,8 @@ function IsValidAction(actionName) {
 async function WaitTillAction(actionName) {
 
     if (!IsValidAction(actionName)) {
-        console.warn("Action has not been registered");
+        if (devMode)
+            console.warn("Action has not been registered");
         return;
     }
 
@@ -224,29 +252,12 @@ function IsKeyPressed(actionName) {
     return ikp;
 }
 
-function _CameraScroll() {
+document.addEventListener("keypress", (key) => {
+    key.preventDefault();
+    if (!pressedKeys.includes(key.key))
+        pressedKeys.push(key.key);
+});
 
-    if (freecam)
-        return;
-
-    const entX = movementTarget.CenterOfMass()[0];
-    const entY = movementTarget.CenterOfMass()[1];
-
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-
-    const scrollX = entX - viewportWidth / 2;
-    const scrollY = entY - viewportHeight / 2;
-
-    const maxScrollX = document.body.scrollWidth - viewportWidth;
-    const maxScrollY = document.body.scrollHeight - viewportHeight;
-
-    const clampedX = Math.max(0, Math.min(scrollX, maxScrollX));
-    const clampedY = Math.max(0, Math.min(scrollY, maxScrollY));    
-
-    window.scrollTo({
-        left: clampedX,
-        top: clampedY,
-        // behavior: 'smooth'
-    });
-}
+document.addEventListener("keyup", (key) => {
+    pressedKeys.splice(pressedKeys.indexOf(key.key), 1);
+});

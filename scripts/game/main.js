@@ -1,9 +1,10 @@
 const GameArea = document.getElementById("safespace");
+var GameSafeSpace = GameArea.getBoundingClientRect();
+
 const HUDSpace = document.getElementById("HUD");
 
 const tickrate = 1;
-const GameSafeSpace = GameArea.getBoundingClientRect();
-const gravity = 6;
+const gravity = 3;
 
 const devMode = true;
 
@@ -18,12 +19,12 @@ _RegisterSounds();
 const player = new Sentient("player", [0, 0], [100, 100], "./assets/img/testplayer.jpg", "allies", false);
 
 async function __sysMain() {
-    GameArea.style.height = GameSafeSpace.bottom + "px";
-    GameArea.style.width = GameSafeSpace.right + "px";
 
-    _initControls(player);
+    SetPlayableAreaSize(GameArea.style.width, GameArea.style.height);
 
     await _NoLevelLoaded();
+
+    _initControls(player);
 
     _StartSys();
 
@@ -57,19 +58,25 @@ async function __sysMain() {
 async function _gravityMain(ent) {
     if (ent.ignoreGravity || ent.iIgnoreGravity) return;
 
-    if (ent.pos[1] + ent.coll[1] < GameSafeSpace.bottom) {
+    if (ent.pos[1] + ent.coll[1] < GameSafeSpace.bottom && ent.shouldFall) {
+
         ent.docRef.style.marginTop = ent.pos[1] + "px";
-        ent.pos[1]++;
+        ent.pos[1] += (gravity * ent.weight);
+
         ent.falling = true;
         ent.midAir = true;
     } else {
+        if (ent.pos[1] + ent.coll[1] > GameSafeSpace.bottom) {
+            ent.pos[1] = GameSafeSpace.bottom-ent.coll[1];
+            ent.docRef.style.marginTop = ent.pos[1] + "px";
+        }
+
         ent.falling = false;
         ent.midAir = false;
     }
 }
 
 async function _collMain(ent) {
-    let cs = false;
 
     if ((ent.entType() == "sentient" && ent.dead) || ent.docRef.parentNode !== GameArea)
         return;
@@ -77,7 +84,8 @@ async function _collMain(ent) {
     for (let i = 0; i < entities.length; i++) {
         var ent2 = entities[i];
 
-        if (ent === ent2 || (ent2.entType() == "sentient" && ent2.dead) || ent2.docRef.parentNode !== GameArea) continue;
+        if (ent === ent2 || (ent2.entType() == "sentient" && ent2.dead) || ent2.docRef.parentNode !== GameArea)
+            continue;
 
         let entLeft = ent.pos[0];
         let entRight = ent.pos[0] + ent.coll[0];
@@ -89,38 +97,44 @@ async function _collMain(ent) {
         let ent2Top = ent2.pos[1];
         let ent2Bottom = ent2.pos[1] + ent2.coll[1];
 
-        if (entLeft < ent2Right && entRight > ent2Left &&
-            entTop < ent2Bottom && entBottom > ent2Top) {
+        if (entLeft < ent2Right && entRight > ent2Left && entTop < ent2Bottom && entBottom > ent2Top) {
 
-            if (!ent.solid) {
-                cs = true;
-                ent.collTarget = ent2;
+            ent.collTarget = ent2;
+
+            if (!ent.solid || !ent2.solid) {
                 return;
-            } else if (ent.solid && ent2.solid) {
+            } else {
                 let overlapX = Math.min(entRight, ent2Right) - Math.max(entLeft, ent2Left);
                 let overlapY = Math.min(entBottom, ent2Bottom) - Math.max(entTop, ent2Top);
 
                 if (overlapX < overlapY) {
-                    if (ent.pos[0] <= ent2.pos[0]) {
-                        ent.pos[0] = ent2.pos[0] - ent.coll[0];
+                    // to the left side
+                    if (!ent.IsToTheRight(ent2) && ent.weight < ent2.weight && ent.pos[0] > GameSafeSpace.left) {
+                        ent.pos[0] = ent2.CenterOfMass()[0] - (ent2.coll[0] + (ent.coll[0] / 2.1));
+                    // to the right side
+                    } else if (ent.IsToTheRight(ent2) && ent.weight <= ent2.weight && ent.pos[0] + ent.coll[0] < GameSafeSpace.right) {
+                        ent.pos[0] = ent2.CenterOfMass()[0] + (ent2.coll[0] / 2);
                     }
                 }
                 else {
-                    if (ent.pos[1] <= ent2.pos[1]) {
+                    if (ent.IsAbove(ent2) && ent.pos[1] > GameSafeSpace.top) {
                         ent.pos[1] = ent2.pos[1] - ent2.coll[1];
+                        ent.shouldFall = false;
+
+                    } else {
+                        ent.shouldFall = true;
                     }
                 }
 
                 //to avoid desync
-                ent.Teleport([ent.pos[0], ent.pos[1]]);
+                ent.Teleport([ent.pos[0], ent.pos[1]], false);
 
                 return;
             }
+        } else {
+            ent.collTarget = undefined;
+            ent.shouldFall = true;
         }
-    }
-
-    if (!cs) {
-        ent.collTarget = undefined;
     }
 }
 
@@ -128,6 +142,7 @@ async function _interpolateMain(ent) {
 
     if (ent.linkedTo != null) {
         ent.Teleport([ent.linkedTo.pos[0] + ent.linkedToOffset[0], ent.linkedTo.pos[1] + ent.linkedToOffset[1]]);
+        return;
     }
 
     if (!ent.interpolating) return;
@@ -146,33 +161,17 @@ async function _interpolateMain(ent) {
     ent.docRef.style.marginLeft = ent.interpos[0] + "px";
 
     if (ent.iIgnoreGravity || ent.ignoreGravity) {
-        if (ent.movespeed > 1) {
-            if (ent.end[1] > ent.pos[1] && ent.interpos[1] != ent.end[1]) {
-                ent.interpos[1] = ent.interpos[1] + 1 * ent.movespeed;
-            } else if (ent.interpos[1] != ent.end[1]) {
-                ent.interpos[1] = ent.interpos[1] - 1 * ent.movespeed;
-            }
-        } else {
-            if (ent.end[1] > ent.pos[1] && ent.interpos[1] != ent.end[1]) {
-                ent.interpos[1] = ent.interpos[1] + 1;
-            } else if (ent.interpos[1] != ent.end[1]) {
-                ent.interpos[1] = ent.interpos[1] - 1;
-            }
+        if (ent.end[1] > ent.pos[1] && ent.interpos[1] != ent.end[1]) {
+            ent.interpos[1] = ent.interpos[1] + (1 * ent.movespeed);
+        } else if (ent.interpos[1] != ent.end[1]) {
+            ent.interpos[1] = ent.interpos[1] - (1 * ent.movespeed);
         }
 
         ent.docRef.style.marginTop = ent.interpos[1] + "px";
-    }
+    }   
 
-
-    const reachedX =
-        ent.movespeed > 0
-            ? Math.abs(ent.interpos[0] - ent.end[0]) <= ent.movespeed
-            : ent.interpos[0] === ent.end[0];
-
-    const reachedY =
-        ent.movespeed > 0
-            ? Math.abs(ent.interpos[1] - ent.end[1]) <= ent.movespeed
-            : ent.interpos[1] === ent.end[1];
+    const reachedX = Math.abs(ent.interpos[0] - ent.end[0]) <= ent.movespeed;
+    const reachedY = Math.abs(ent.interpos[1] - ent.end[1]) <= ent.movespeed;
 
     if (reachedX && reachedY) {
         ent.interpolating = false;
@@ -182,16 +181,19 @@ async function _interpolateMain(ent) {
 
 async function _NoLevelLoaded() {
 
+    gamePaused = true;
+
     const ErrorContainer = new GameContainer(
         [0, 0],
-        [600, 300],
+        ["100%", "100%"],
         {
-            display: "block",
-            alignX: "between",
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
             alignY: "center",
-            textAlign: "center",
-            padding: 20,
             BGColor: "#000000ee",
+            index: 45,
+            gap: 20,
             border: {
                 borderImg: "black",
                 borderSize: 3,
@@ -199,19 +201,22 @@ async function _NoLevelLoaded() {
                 borderRadius: 25
             }
         },
+        true,
         true
     );
 
     const ButtonsContainer = new GameContainer(
         [0, 0],
-        [600, 150],
+        ["auto", "auto"],
         {
             display: "flex",
+            position: 'relative',
             alignX: "between",
             alignY: "center",
             gap: 20
         },
-        true
+        true,
+        false
     );
 
     const errorMessage = new GameText(
@@ -230,64 +235,69 @@ async function _NoLevelLoaded() {
 
     const LoadLevelBtn = new GameButton(
         [0, 0],
-        [500, 100],
+        ["100%", "100%"],
         "Load level",
         () => {
             _levelLoader()
         },
         {
+            display: "flex",
             position: "relative",
             alignX: "center",
             alignY: "center",
             color: "white",
+            padding: 10,
             border: {
                 borderImg: "white",
                 borderSize: 2,
                 borderStyle: "solid",
                 borderRadius: 25
             },
-            fontSize: 50
+            fontSize: 30
         },
         true
     );
 
-    const CreateLevelBtn = new GameButton(
-        [0, 0],
-        [500, 100],
-        "Open level editor",
-        () => { },
-        {
-            position: "relative",
-            alignX: "center",
-            alignY: "center",
-            color: "white",
-            border: {
-                borderImg: "white",
-                borderSize: 2,
-                borderStyle: "solid",
-                borderRadius: 25
-            },
-            padding: 10,
-            fontSize: 50
-        },
-        true
-    );
+    // const CreateLevelBtn = new GameButton(
+    //     [0, 0],
+    //     ["100%", "100%"],
+    //     "Open level editor",
+    //     () => { },
+    //     {
+    //         display: "block",
+    //         position: "relative",
+    //         alignX: "center",
+    //         alignY: "center",
+    //         color: "white",
+    //         border: {
+    //             borderImg: "white",
+    //             borderSize: 2,
+    //             borderStyle: "solid",
+    //             borderRadius: 25
+    //         },
+    //         padding: 10,
+    //         fontSize: 50
+    //     },
+    //     true
+    // );
 
     ErrorContainer.AttachToMe(errorMessage);
     ErrorContainer.AttachToMe(ButtonsContainer);
 
     ButtonsContainer.AttachToMe(LoadLevelBtn);
-    ButtonsContainer.AttachToMe(CreateLevelBtn);
+    // ButtonsContainer.AttachToMe(CreateLevelBtn);
 
     while (loadedLevel == "") {
         await new Promise(resolve => setTimeout(resolve, tickrate));
     }
 
+    gamePaused = false;
+
     ErrorContainer.Delete();
     ButtonsContainer.Delete();
     errorMessage.Delete();
     LoadLevelBtn.Delete();
-    CreateLevelBtn.Delete();
+    // CreateLevelBtn.Delete();
 }
 
 function _levelLoader() {
@@ -322,6 +332,18 @@ function _levelLoader() {
 
     fileInput.click();
 
+}
+
+function SetPlayableAreaSize(x, y) {
+
+    GameArea.style.height = y + "px";
+    GameArea.style.width = x + "px";
+
+    GameSafeSpace = GameArea.getBoundingClientRect();
+}
+
+function SetGameBackground(imgPath) {
+    GameArea.style.backgroundImage = `url(${imgPath})`
 }
 
 __sysMain();

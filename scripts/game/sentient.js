@@ -1,4 +1,5 @@
 var sentients = [];
+var deadCleanupTime = 10;
 
 class Sentient extends Entity {
     //state
@@ -17,6 +18,9 @@ class Sentient extends Entity {
     team = "unset";
     target = undefined;
 
+    //methods
+    onDeath;
+
     constructor(id, sp, ppr, img, team, hasAI) {
         super(id, sp, ppr, img);
 
@@ -28,6 +32,8 @@ class Sentient extends Entity {
         this.RegisterSentient();
 
         this.GiveWeapon(GetWeaponByName("DEFAULTMELEE"));
+
+        this.onDeath = () => {};
     }
 
     async _think() {
@@ -36,7 +42,7 @@ class Sentient extends Entity {
             return;
 
         if (this.health <= 0)
-            this.onDeath();
+            this._Death();
 
         if (!this.aiEnabled)
             return;
@@ -134,7 +140,8 @@ class Sentient extends Entity {
         }
     }
 
-    onDeath() {
+    _Death() {
+
         this.dead = true;
         this.StopMove();
         this.solid = false;
@@ -142,7 +149,15 @@ class Sentient extends Entity {
         if (this.docRef != null)
             this.docRef.classList.add("dead");
 
-        sentients.splice(sentients.indexOf(this), 1);
-        entities.splice(entities.indexOf(this), 1);
+        this.onDeath();
+
+        this._Cleanup();
+        
+    }
+
+    async _Cleanup() {
+        await s(deadCleanupTime);
+
+        this.Delete();
     }
 }

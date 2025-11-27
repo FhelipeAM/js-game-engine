@@ -13,21 +13,22 @@ function cl(str) {
 
 function distance(ent1, ent2) {
 
-    let v1;
+    let pos1, pos2, distX, distY;
+
     if (!Array.isArray(ent1))
-        v1 = (ent1.CenterOfMass()[0]);
+        pos1 = ent1.CenterOfMass();
     else
-        v1 = ent1[0];
+        pos1 = ent1;
 
     if (!Array.isArray(ent2))
-        v1 -= (ent2.CenterOfMass()[0]);
+        pos2 = ent2.CenterOfMass();
     else
-        v1 -= ent2[0];
+        pos2 = ent2;
 
-    if (v1 <= 0) 
-        v1 *= -1;
-    
-    return v1;
+    distX = pos1[0] - pos2[0];
+    distY = pos1[1] - pos2[1];
+
+    return Math.sqrt(distX * distX + distY * distY);
 }
 
 function posSnap(ent) {
@@ -70,6 +71,12 @@ async function D_DrawText(start, text, acolor, duration) {
     await text.FadeOut(1);
 
     text.Delete();
+}
+
+async function ArrayEmptied(array) {
+    while (array.length > 0) {
+        await new Promise(resolve => setTimeout(resolve, tickrate));
+    }
 }
 
 //GetMousePos
