@@ -36,8 +36,6 @@ function PlaySound(soundInfo) {
     }
 
     var audio = new Audio(PickRandomFromArray(soundInfo.path));
-    audio.volume = soundInfo.vol;
-    audio.loop = soundInfo.loop;
 
     if (!soundInfo.loop) {
         audio.addEventListener("ended", function() {
@@ -46,6 +44,8 @@ function PlaySound(soundInfo) {
     }
 
     audio.play();
+    audio.volume = soundInfo.vol;
+    audio.loop = soundInfo.loop;
 
     return audio;
 }
@@ -66,26 +66,18 @@ async function SndFadeOut(audio, time) {
     let volRef = audio.volume;
     let startTime = Date.now();
     
-    while (volRef > 0) {
+    while (audio.volume > 0) {
 
         while (gamePaused)
             await ms(tickrate)
 
-        const elapsed = Date.now() - startTime;
-        volRef = 1 - (elapsed / (time * 1000));
-        audio.volume = Math.max(volRef, 0);
+        let elapsed = Date.now() - startTime;
+
+        audio.volume = volRef * (1 - Math.min(elapsed / (time * 1000), 1));
 
         await ms(tickrate);
     }
 
     StopSound(audio);
 
-}
-
-function PickRandomFromArray(paths) {
-    if (!Array.isArray(paths)) {
-        return paths;
-    } else {
-        return paths[Math.floor(Math.random() * paths.length)]
-    }
 }

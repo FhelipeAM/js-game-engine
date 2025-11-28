@@ -1,12 +1,23 @@
 main();
 
 var wave = 1;
+var sWaves = 0;
 
 async function main() {
     SetPlayableAreaSize(10000, 10000);
     SetGameBackground("assets/img/testent2.png");
 
-    RegisterSound("game_start_song", ["assets/snd/music/bt_mp_menumusic.mp3", "assets/snd/music/bt_pybk_intro.mp3", "assets/snd/music/bt_london_westminster_action_lp.mp3", ], false, 0.4);
+    RegisterSound(
+        "game_start_song", 
+        [
+            "assets/snd/music/bt_mp_menumusic.mp3", 
+            "assets/snd/music/bt_pybk_intro.mp3", 
+            "assets/snd/music/bt_london_westminster_action_lp.mp3",
+        ], 
+        false, 
+        0.3
+    );
+
     RegisterSound("death_song", "assets/snd/music/sad_song1_faststart.mp3", false, 0.7);
 
     RegisterSound("new_wave", "assets/snd/ui/ui_arcade_zero_death1.wav", false, 0.8);
@@ -17,66 +28,85 @@ async function main() {
 
     RegisterSound("box_spawned", "assets/snd/ui/ui_arcade_extra_life1.wav", false, 0.7);
 
-    new Weapon("playerRifle", "single", 15, 10000, 100, 0, 2.2, 5, 10, [{
-        name: "attack",
-        path: "./assets/snd/weapon/Gunshot2.ogg",
-        loop: false,
-        vol: 0.6
-    },
-    {
-        name: "dryfire",
-        path: "./assets/snd/weapon/DryFire.ogg",
-        loop: false,
-        vol: 0.5
-    },
-    {
-        name: "reload",
-        path: "./assets/snd/weapon/reload_m16.ogg",
-        loop: false,
-        vol: 0.2
-    }
-    ])
-    
-    new Weapon("basicAIRifle", "single", 12, 3000, 20, Infinity, 2.6, 6, 5, [{
-        name: "attack",
-        path: "./assets/snd/weapon/Gunshot.ogg",
-        loop: false,
-        vol: 0.6
-    },
-    {
-        name: "reload",
-        path: "./assets/snd/weapon/reload_g36.ogg",
-        loop: false,
-        vol: 0.2
-    }
+    new Weapon("playerRifle", "single", 15, 9000, 100, 0, 2.2, 5, 10, [
+        {
+            name: "attack",
+            path: "./assets/snd/weapon/Gunshot2.ogg",
+            loop: false,
+            vol: 0.5
+        },
+        {
+            name: "dryfire",
+            path: "./assets/snd/weapon/DryFire.ogg",
+            loop: false,
+            vol: 0.5
+        },
+        {
+            name: "reload",
+            path: "./assets/snd/weapon/reload_m16.ogg",
+            loop: false,
+            vol: 0.2
+        }
     ])
 
-    new Weapon("sniperRifle", "single", 25, Infinity, 1, Infinity, 2.6, 2, 30, [{
-        name: "attack",
-        path: "./assets/snd/weapon/weap_cheytac_slst_2d3.wav",
-        loop: false,
-        vol: 0.75
-    },
-    {
-        name: "reload",
-        path: "./assets/snd/weapon/wpfoly_cheytech_reload_bolt_v1.wav",
-        loop: false,
-        vol: 0.6
-    }
+    new Weapon("basicAIRifle", "single", 12, 1000, 20, Infinity, 2.6, 6, 5, [
+        {
+            name: "attack",
+            path: "./assets/snd/weapon/Gunshot.ogg",
+            loop: false,
+            vol: 0.4
+        },
+        {
+            name: "reload",
+            path: "./assets/snd/weapon/reload_g36.ogg",
+            loop: false,
+            vol: 0.2
+        }
     ])
-    
-    new Weapon("advAIRifle", "single", 36, 6000, 30, Infinity, 4.2, 6, 3, [{
-        name: "attack",
-        path: "./assets/snd/weapon/wpnfire_tavor_v2_01.wav",
-        loop: false,
-        vol: 0.6
-    },
-    {
-        name: "reload",
-        path: "./assets/snd/weapon/reload_m16.ogg",
-        loop: false,
-        vol: 0.2
-    }
+
+    new Weapon("sniperRifle", "single", 25, 8000, 1, Infinity, 2.6, 2, 30, [
+        {
+            name: "attack",
+            path: "./assets/snd/weapon/weap_cheytac_slst_2d3.wav",
+            loop: false,
+            vol: 0.5
+        },
+        {
+            name: "reload",
+            path: "./assets/snd/weapon/wpfoly_cheytech_reload_bolt_v1.wav",
+            loop: false,
+            vol: 0.6
+        }
+    ])
+
+    new Weapon("advAIRifle", "single", 36, 3000, 30, Infinity, 4.2, 8, 3, [
+        {
+            name: "attack",
+            path: "./assets/snd/weapon/wpnfire_tavor_v2_01.wav",
+            loop: false,
+            vol: 0.2
+        },
+        {
+            name: "reload",
+            path: "./assets/snd/weapon/reload_m16.ogg",
+            loop: false,
+            vol: 0.2
+        }
+    ])
+
+    new Weapon("juggLMG", "single", 42, 4000, 60, Infinity, 5.6, 10, 6, [
+        {
+            name: "attack",
+            path: "./assets/snd/weapon/weap_mg36_slst_1b.wav",
+            loop: false,
+            vol: 0.1
+        },
+        {
+            name: "reload",
+            path: "./assets/snd/weapon/reload_m16.ogg",
+            loop: false,
+            vol: 0.2
+        }
     ])
 
     SetupPlayer();
@@ -114,7 +144,7 @@ function SetupPlayer() {
         if (movementTarget.pos[1] < GameSafeSpace.bottom - movementTarget.coll[1]) {
             diry = movementTarget.pos[1] + 1;
         }
-        
+
         movementTarget.MoveTo([dirx, diry], true);
 
         diry = movementTarget.pos[1]
@@ -129,40 +159,81 @@ function SetupPlayer() {
 }
 
 async function waveSpawner() {
-    let enemies = []; 
+    let enemies = [];
 
     let startMusic = PlaySound(GetSoundInfo("game_start_song"));
 
-    while (true) {
+    while (player.health > 0) {
         if (wave < 10)
             await s(wave);
         else
             await s(10);
 
+        await SndFadeOut(startMusic, 3);
+
         player.weapons.damage += wave;
-        
-        SndFadeOut(startMusic, 3);
-        PlaySound(GetSoundInfo("new_wave"));
-        
-        for(let i = 0; i < wave; i++) {
-            let hostile = CreateEnemy();
-            enemies.push(hostile);
-            hostile.onDeath = () => { enemies.splice(enemies.indexOf(this), 1) }
+        CreateLootBox(false);
+
+
+        if (wave % 5 != 0) {
+            PlaySound(GetSoundInfo("new_wave"));
+
+            for (let i = 0; i < wave; i++) {
+                let hostile = CreateEnemy();
+                enemies.push(hostile);
+                hostile.onDeath = () => { enemies.splice(enemies.indexOf(this), 1) }
+            }
+
+        } else {
+            PlaySound(GetSoundInfo("jugg_spawn"));
+
+            let juggernaut = new Sentient("Sentient" + entCount, PickRandomPos(), [100, 130], "./assets/img/testent.jpg", "axis", true);
+            juggernaut.ignoreGravity = true;
+
+            juggernaut.health = 1000 * wave;
+            juggernaut.SetModel("assets/img/testent4.png");
+            juggernaut.GiveWeapon(GetWeaponByName("juggLMG"));
+
+            juggernaut.weapons.damage += wave;
+
+            if (juggernaut.weapons.fireTime > 1)
+                juggernaut.weapons.fireTime -= (wave/10);
+            else 
+                juggernaut.weapons.fireTime = 1;
+            
+            if (juggernaut.weapons.bulletSpeed < 14)
+                juggernaut.weapons.bulletSpeed += (wave/10);
+            else 
+                juggernaut.weapons.bulletSpeed = 14;
+            
+            if (juggernaut.weapons.reloadTime < 1.5)
+                juggernaut.weapons.reloadTime -= (wave/10);
+            else 
+                juggernaut.weapons.reloadTime += 1.5;
+
+            enemies.push(juggernaut);
+            juggernaut.onDeath = () => { enemies.splice(enemies.indexOf(this), 1) }
+
         }
-        
+
         await ArrayEmptied(enemies);
 
         wave++;
+        sWaves ++;
     }
 }
 
 async function LootBoxSpawner() {
 
-    while (true) {
+    while (player.health > 0) {
 
-        CreateLootBox();
+        CreateLootBox(true);
 
-        await s(30);
+        let waittime = (player.weapons.curAmmoCount + player.health) / 10;
+
+        cl(waittime);
+
+        await s(10 + waittime);
     }
 }
 
@@ -170,8 +241,8 @@ async function LootBoxSpawner() {
 
 function CreateEnemy() {
     let limit = 4;
-     
-    let stubEnt = new Sentient("Sentient"+entCount, PickRandomPos(), [100, 130], "./assets/img/testent.jpg", "axis", true);
+
+    let stubEnt = new Sentient("Sentient" + entCount, PickRandomPos(), [100, 130], "./assets/img/testent.jpg", "axis", true);
     stubEnt.ignoreGravity = true;
 
     let classPick = Math.floor(Math.random() * 10);
@@ -179,7 +250,8 @@ function CreateEnemy() {
     switch (classPick) {
         default:
         case 1:
-            
+            if (wave > 10)
+                stubEnt.GiveWeapon(GetWeaponByName("basicAIRifle"));
             break;
         case 2:
             stubEnt.health = stubEnt.health * (2 * (wave / 10));
@@ -194,7 +266,7 @@ function CreateEnemy() {
                 stubEnt.movespeed = 10;
 
             stubEnt.SetModel("assets/img/testent6.png");
-            stubEnt.GiveWeapon(GetWeaponByName("basicAIRifle"));
+            stubEnt.GiveWeapon(GetWeaponByName("advAIRifle"));
             break;
         case 4:
             stubEnt.movespeed = 0;
@@ -203,27 +275,25 @@ function CreateEnemy() {
             break;
     }
 
-    // classPick++;
-
-    // if (classPick > limit)
-    //     classPick = 0;
+    stubEnt.weapons.damage += wave;
 
     return stubEnt;
 }
 
-async function CreateLootBox() {
-    var stubEnt = new Entity("lootbox"+entCount, PickRandomPos(), [100, 100], "./assets/img/testplayer.jpg");
+async function CreateLootBox(playsound) {
+    var stubEnt = new Entity("lootbox" + entCount, PickRandomPos(), [100, 100], "./assets/img/testplayer.jpg");
     stubEnt.ignoreGravity = true;
 
-    PlaySound(GetSoundInfo("box_spawned"));
+    if (playsound)
+        PlaySound(GetSoundInfo("box_spawned"));
 
     await stubEnt.Collide();
 
     if (stubEnt.collTarget == player) {
         player.weapons.curAmmoCount = player.weapons.ammoCount;
         player.weapons.curAmmoCountRes = player.weapons.ammoCountRes;
-        if (player.health < 99 && player.health + (player.health / 2) < 99)
-            player.health += player.health / 2;
+
+        player.health += Math.floor(Math.random() * 100);
 
         PlaySound(GetSoundInfo("player_box_break"));
     } else {
@@ -239,7 +309,7 @@ function PickRandomPos() {
 }
 
 async function GameOver() {
-    
+
     PlaySound(GetSoundInfo("death_song"));
 
     const Centralizer = new GameContainer(
@@ -255,12 +325,13 @@ async function GameOver() {
         true,
         true
     );
-    
+
     const GameOverContainer = new GameContainer(
         [0, 0],
         ["auto", "auto"],
         {
-            display: "block",
+            display: "flex",
+            flexDir: "column",
 
             alignX: "center",
             alignY: "center",
@@ -268,7 +339,7 @@ async function GameOver() {
             textAlign: "center",
 
             padding: 20,
-            gap: 0,
+            gap: 10,
             BGColor: "#eeeeeeee",
             border: {
                 borderImg: "black",
@@ -282,9 +353,9 @@ async function GameOver() {
         false
     );
 
-    const errorMessage = new GameText(
+    const DeathMessage = new GameText(
         [0, 0],
-        [500, 100],
+        [500, 55],
         "You died!",
         {
             position: "relative",
@@ -292,6 +363,45 @@ async function GameOver() {
             alignY: "center",
             color: "red",
             fontSize: 50
+        },
+        true
+    );
+
+    let protips = [
+        "Preserve your ammo... Only shoot at what you can kill.",
+        "Every 5 waves there is a juggernaut.",
+        "Ammo/health refills respawn according to how much ammo and health you have.",
+        "Certain attributes for certain characters (like damage) will increase per wave.",
+        "Use evasive maneuvers to avoid incoming fire.",
+        "Ammo/health refills can be destroyed by hostiles and your own bullets.",
+        "Pay attention to the appearance of hostiles, their skills vary accordingly.",
+        "A new wave takes only up to 10 seconds to start, keep hostiles alive to plan for upcoming waves.",
+    ];
+
+    const survivedWaves = new GameText(
+        [0, 0],
+        ["100%", "100%"],
+        "Waves survived: " + sWaves,
+        {
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "black",
+            fontSize: 20
+        },
+        true
+    );
+
+    const ProTip = new GameText(
+        [0, 0],
+        ["100%", "100%"],
+        PickRandomFromArray(protips),
+        {
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "black",
+            fontSize: 20
         },
         true
     );
@@ -320,7 +430,9 @@ async function GameOver() {
     );
 
     Centralizer.AttachToMe(GameOverContainer);
-    GameOverContainer.AttachToMe(errorMessage);
+    GameOverContainer.AttachToMe(DeathMessage);
+    GameOverContainer.AttachToMe(ProTip);
+    GameOverContainer.AttachToMe(survivedWaves);
     GameOverContainer.AttachToMe(QuitGameBtn);
 
     await s(2);

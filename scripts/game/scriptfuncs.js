@@ -79,6 +79,14 @@ async function ArrayEmptied(array) {
     }
 }
 
+function PickRandomFromArray(paths) {
+    if (!Array.isArray(paths)) {
+        return paths;
+    } else {
+        return paths[Math.floor(Math.random() * paths.length)]
+    }
+}
+
 //GetMousePos
 // document.addEventListener("mousedown", async (event) => {
     
@@ -94,7 +102,7 @@ document.addEventListener("mousemove", async (event) => {
 
 
 //Has to be done this way because otherwise we can't unpause
-RegisterInput("h", "PauseGame", () => {});
+RegisterInput("g", "PauseGame", () => {});
 document.addEventListener("keyup", async (event) => {
     
     if (getActionFromKeybind(event.key).action == "PauseGame") {
