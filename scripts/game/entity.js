@@ -51,7 +51,7 @@ class Entity {
 
         this.Teleport(startPos);
 
-        this.onDelete = () => { }
+        this.onDelete = () => { };
     }
 
     SpawnEntity(id) {
@@ -242,8 +242,13 @@ class Entity {
 
                 this.docRef.style.borderWidth = dat["border"]["borderSize"] + UOP;
                 this.docRef.style.borderStyle = dat["border"]["borderStyle"];
-                this.docRef.style.borderRadius = dat["border"]["borderRadius"] + UOP;
 
+                if ("borderRadius" in dat["border"]) {
+                    if (typeof dat["border"]["borderRadius"] == "string")
+                        this.docRef.style.borderRadius = dat["border"]["borderRadius"];
+                    else
+                        this.docRef.style.borderRadius = dat["border"]["borderRadius"] + UOP;
+                }
             }
 
         } else {
@@ -269,6 +274,8 @@ class Entity {
             return;
 
         entities.splice(entities.indexOf(this), 1);
+
+        this.onDelete();
 
         if (this.docRef.children.length > 0) {
 

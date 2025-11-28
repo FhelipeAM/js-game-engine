@@ -98,6 +98,8 @@ main();
 
 async function main() {
 
+    displayDamage = true;
+
     RegisterSound("song_test", "assets/snd/music/sad_song1_faststart.mp3", false, 1.0);
 
     player.Teleport([200, 500]);

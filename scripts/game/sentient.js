@@ -1,5 +1,6 @@
 var sentients = [];
 var deadCleanupTime = 10;
+var displayDamage = true;
 
 class Sentient extends Entity {
     //state
@@ -127,7 +128,8 @@ class Sentient extends Entity {
         if (this.health <= 0 || this.godMode)
             return;
 
-        D_DrawText([this.pos[0], this.pos[1] - this.coll[1]], "-" + amount, "red", 2);
+        if (displayDamage)
+            DrawText([this.pos[0], this.pos[1] - this.coll[1]], "-" + amount, "red", 2);
 
         this.onDamage();
         this.health -= amount;

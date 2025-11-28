@@ -286,8 +286,10 @@ async function _NoLevelLoaded() {
         await new Promise(resolve => setTimeout(resolve, tickrate));
     }
 
-    if (loadedLevel != "editor")
+    if (loadedLevel != "editor") {
         gamePaused = false;
+        devMode = false;
+    }
 
     ErrorContainer.Delete();
     ButtonsContainer.Delete();

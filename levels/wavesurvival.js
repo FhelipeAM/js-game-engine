@@ -6,6 +6,9 @@ var wave = 1;
 var sWaves = 0;
 
 async function main() {
+
+    displayDamage = true;
+
     SetPlayableAreaSize(10000, 10000);
     SetGameBackground("assets/img/testent2.png");
 

@@ -98,9 +98,7 @@ async function D_DrawLine(start, end, color, duration) {
     posRef.Delete();
 }
 
-async function D_DrawText(start, text, acolor, duration) {
-
-    if (!devMode) return;
+async function DrawText(start, text, acolor, duration) {
 
     var text = new GameText(
         start,
@@ -172,4 +170,6 @@ async function _StartSys() {
         }
 
     })
+
+    _startMovement();
 }

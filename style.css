@@ -70,7 +70,10 @@ body {
 
 .GameButton {
     cursor: pointer;
-    border: 2px solid red;
+}
+
+.GameInputBox {
+    cursor: text;
 }
 
 .ltr {

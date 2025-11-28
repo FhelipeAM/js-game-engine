@@ -22,7 +22,19 @@ function _initControls(target) {
     diry = movementTarget.pos[1];
 
     _baseMovement();
+}
 
+function _startMovement() {
+
+    document.addEventListener("keypress", (key) => {
+        key.preventDefault();
+        if (!pressedKeys.includes(key.key))
+            pressedKeys.push(key.key);
+    });
+
+    document.addEventListener("keyup", (key) => {
+        pressedKeys.splice(pressedKeys.indexOf(key.key), 1);
+    });
 }
 
 function _baseMovement() {
@@ -251,13 +263,3 @@ function IsKeyPressed(actionName) {
 
     return ikp;
 }
-
-document.addEventListener("keypress", (key) => {
-    key.preventDefault();
-    if (!pressedKeys.includes(key.key))
-        pressedKeys.push(key.key);
-});
-
-document.addEventListener("keyup", (key) => {
-    pressedKeys.splice(pressedKeys.indexOf(key.key), 1);
-});

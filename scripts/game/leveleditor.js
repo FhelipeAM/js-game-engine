@@ -1,5 +1,5 @@
-let target = undefined;
-let onAction = false;
+let __editor_target = undefined;
+let __editor_onAction = false;
 
 function _LevelEditorMain() {
 
@@ -13,20 +13,17 @@ function _LevelEditorMain() {
 
     document.addEventListener("mousedown", (e) => {
 
-        if (onAction)
+        if (__editor_onAction)
             return;
 
-        if (!isUtilMenuOpen())
+        if (!isMenuOpen("UtilityMenu"))
             GetMousePos(e)
-
-        e.preventDefault();
 
         switch (e.button) {
             case 0:
                 _SelectEnt();
                 break;
             case 1:
-
                 break;
             case 2:
                 _UtilityMenu(undefined);
@@ -39,11 +36,11 @@ function _LevelEditorMain() {
 
 async function _SelectEnt() {
 
-    onAction = true;
-
-    if (isUtilMenuOpen()) {
+    if (isMenuOpen("UtilityMenu")) {
         return;
     }
+
+    __editor_onAction = true;
 
     let stubEnt = new Entity("mouseCast" + entCount, mousePos, [1, 1], "transparent");
     stubEnt.ignoreGravity = true;
@@ -52,9 +49,11 @@ async function _SelectEnt() {
     _collMain(stubEnt); // Big, huge brain move
 
     if (stubEnt.collTarget != undefined) {
-        target = stubEnt.collTarget;
+        __editor_target = stubEnt.collTarget;
 
-        _UtilityMenu(target);
+        _UtilityMenu(__editor_target);
+    } else {
+        __editor_onAction = false;
     }
 
     stubEnt.Delete();
@@ -63,7 +62,7 @@ async function _SelectEnt() {
 
 function _UtilityMenu(selectedEnt) {
 
-    if (isUtilMenuOpen()) {
+    if (isMenuOpen("UtilityMenu")) {
         let stubUtil = GetEnt("UtilityMenu")
         stubUtil.Delete();
         return;
@@ -71,14 +70,15 @@ function _UtilityMenu(selectedEnt) {
 
     const UtilContainer = new GameContainer(
         mousePos,
-        [300, 300],
+        [200, 200],
         {
             display: "flex",
             flexDir: "column",
             alignX: "center",
-            alignY: "center",
+            alignY: "top",
             BGColor: "#ffffff",
-            index: 45,
+            padding: 20,
+            index: 15,
             gap: 10,
             border: {
                 borderImg: "black",
@@ -91,15 +91,15 @@ function _UtilityMenu(selectedEnt) {
         true
     );
 
+    //________________________________CREATE ENTITY_________________________
     if (selectedEnt == undefined) {
 
         const CreateEntBtn = new GameButton(
             [0, 0],
-            ["80%", "max-content"],
-            "Create ent",
+            ["100%", "max-content"],
+            "Create new entity",
             () => {
                 _selectEntType();
-                UtilContainer.Delete();
             },
             {
                 display: "flex",
@@ -108,7 +108,6 @@ function _UtilityMenu(selectedEnt) {
                 alignY: "center",
                 color: "black",
                 fontSize: 20,
-                index: 4,
                 border: {
                     borderImg: "black",
                     borderSize: 1,
@@ -120,11 +119,40 @@ function _UtilityMenu(selectedEnt) {
         );
 
         UtilContainer.AttachToMe(CreateEntBtn);
+
+        //__________________________________EDIT ENTITY_________________________
     } else {
 
-        const SetEntImg = new GameButton(
+        const CloseMenuBtn = new GameButton(
             [0, 0],
-            ["80%", "max-content"],
+            [15, "max-content"],
+            "X",
+            () => {
+                UtilContainer.Delete();
+                // isMenuOpen("EntSizeEditor") ? GetEnt("EntSizeEditor").Delete() : "" 
+                __editor_onAction = false;
+            },
+            {
+                display: "flex",
+                position: "relative",
+                alignX: "center",
+                alignY: "center",
+                color: "red",
+                fontSize: 15,
+                padding: 5,
+                border: {
+                    borderImg: "red",
+                    borderSize: 1,
+                    borderStyle: "solid",
+                    borderRadius: "50%"
+                }
+            },
+            true
+        );
+
+        const SetEntImgBtn = new GameButton(
+            [0, 0],
+            ["100%", "max-content"],
             "Set ent image",
             () => {
                 _SetEntImage(selectedEnt);
@@ -137,7 +165,6 @@ function _UtilityMenu(selectedEnt) {
                 alignY: "center",
                 color: "black",
                 fontSize: 20,
-                index: 4,
                 border: {
                     borderImg: "black",
                     borderSize: 1,
@@ -150,7 +177,7 @@ function _UtilityMenu(selectedEnt) {
 
         const moveToBtn = new GameButton(
             [0, 0],
-            ["80%", "max-content"],
+            ["100%", "max-content"],
             "Move to",
             () => {
                 _MoveEnt(selectedEnt);
@@ -163,7 +190,6 @@ function _UtilityMenu(selectedEnt) {
                 alignY: "center",
                 color: "black",
                 fontSize: 20,
-                index: 4,
                 border: {
                     borderImg: "black",
                     borderSize: 1,
@@ -174,8 +200,35 @@ function _UtilityMenu(selectedEnt) {
             true
         );
 
-        UtilContainer.AttachToMe(SetEntImg);
+        const SizeBtn = new GameButton(
+            [0, 0],
+            ["100%", "max-content"],
+            "Change shape",
+            () => {
+                _SizeEnt(selectedEnt);
+                UtilContainer.Delete();
+            },
+            {
+                display: "flex",
+                position: "relative",
+                alignX: "center",
+                alignY: "center",
+                color: "black",
+                fontSize: 20,
+                border: {
+                    borderImg: "black",
+                    borderSize: 1,
+                    borderStyle: "solid",
+                    borderRadius: 25
+                }
+            },
+            true
+        );
+
+        UtilContainer.AttachToMe(CloseMenuBtn);
+        UtilContainer.AttachToMe(SetEntImgBtn);
         UtilContainer.AttachToMe(moveToBtn);
+        UtilContainer.AttachToMe(SizeBtn);
 
     }
 
@@ -184,22 +237,200 @@ function _UtilityMenu(selectedEnt) {
 
 }
 
-function _CreateSampleEnt(type) {
+function _SizeEnt(targetEnt) {
 
-    switch (type) {
-        default:
-        case "default":
-            let ent = new Entity("Entity" + entCount, mousePos, [100, 100], "");
-            break;
-        case "weapon":
-            let wep = new Entity("Weapon" + entCount, mousePos, [100, 100], "");
-            break;
-        case "trigger":
-            let trig = new Entity("trigger" + entCount, mousePos, [100, 100], "");
-            break;
+    let endSizeRef = new Entity("Entity" + entCount, targetEnt.pos, targetEnt.coll, ["",
+        {
+            index: 4,
+            border: {
+                borderImg: "red",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 0
+            }
+        }
+    ]);
+
+    const SizeTextContainer = new GameContainer(
+        [endSizeRef.pos[0] + endSizeRef.coll[0] + 10, endSizeRef.pos[1]],
+        [200, "max-content"],
+        {
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
+            alignY: "top",
+            BGColor: "#ffffff",
+            padding: 20,
+            index: 11,
+            gap: 10,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false,
+        true
+    );
+
+    SizeTextContainer.SetID("EntSizeEditor")
+    SizeTextContainer.onDelete = () => {
+        endSizeRef.Delete();
+    };
+
+    const Width = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], targetEnt.coll[0] + UOS,
+        () => {
+            updateEntSize([Width.text, Height.text])
+        },
+        {
+            position: "relative",
+            display: "flex",
+            alignX: "left",
+            alignY: "center",
+            BGColor: "#ffffff",
+            index: 5,
+            padding: 10,
+            border:
+            {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false
+    );
+
+    const Height = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], targetEnt.coll[1] + UOS,
+        () => {
+            updateEntSize([Width.text, Height.text])
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "left",
+            alignY: "center",
+            BGColor: "#ffffff",
+            index: 5,
+            padding: 10,
+            border:
+            {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false
+    );
+
+    const Confirm = new GameButton(
+        [0, 0],
+        ["max-content", "max-content"],
+        "Confirm",
+        () => {
+            targetEnt.SetSize(endSizeRef.coll)
+            SizeTextContainer.Delete();
+            __editor_onAction = false;
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "left",
+            alignY: "top",
+            color: "green",
+            padding: 5,
+            border: {
+                borderImg: "green",
+                borderSize: 3,
+                borderStyle: "solid",
+                borderRadius: 10
+            },
+            fontSize: 20
+        },
+        true
+    );
+
+    SizeTextContainer.AttachToMe(Width);
+    SizeTextContainer.AttachToMe(Height);
+    SizeTextContainer.AttachToMe(Confirm);
+
+    const updateEntSize = (newSize) => {
+        cl(newSize)
+        endSizeRef.SetSize(newSize);
+        SizeTextContainer.Teleport([endSizeRef.pos[0] + endSizeRef.coll[0] + 10, endSizeRef.pos[1]], true);
+    }
+}
+
+function _MoveEnt(targetEnt) {
+
+    let endPosRef = new Entity("Entity" + entCount, mousePos, [100, 100], ["",
+        {
+            border: {
+                borderImg: "red",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 0
+            }
+        }
+    ]);
+
+    const updateEntPos = (e) => {
+        GetMousePos(e)
+        endPosRef.Teleport(mousePos, true);
     }
 
-    onAction = false;
+    const placeEnt = () => {
+
+        document.removeEventListener("mousemove", updateEntPos);
+
+        targetEnt.Teleport(mousePos, true);
+        endPosRef.Delete();
+
+        __editor_onAction = false;
+
+        document.removeEventListener("click", placeEnt);
+
+    }
+
+    document.addEventListener("mousemove", updateEntPos)
+
+    setTimeout(() => {
+        document.addEventListener("click", placeEnt)
+    }, tickrate);
+}
+
+function _SetEntImage(targetEnt) {
+
+    LoadFile('image/*', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            const image = e.target.result;
+
+            cl(image)
+
+            try {
+                targetEnt.SetModel(image);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        };
+
+        reader.readAsDataURL(file);
+
+        reader.onerror = function (error) {
+            console.error('Error:', error);
+        };
+
+        reader.readAsText(file);
+    });
+
+    __editor_onAction = false;
 }
 
 function _selectEntType() {
@@ -252,31 +483,31 @@ function _selectEntType() {
         true
     );
 
-    const EntTypeWep = new GameButton(
-        [0, 0],
-        ["80%", "max-content"],
-        "Weapon Settings",
-        () => {
-            _CreateSampleEnt("default");
-            EntListContainer.Delete();
-        },
-        {
-            display: "flex",
-            position: "relative",
-            alignX: "center",
-            alignY: "center",
-            color: "black",
-            fontSize: 20,
-            index: 4,
-            border: {
-                borderImg: "black",
-                borderSize: 1,
-                borderStyle: "solid",
-                borderRadius: 25
-            }
-        },
-        true
-    );
+    // const EntTypeWep = new GameButton(
+    //     [0, 0],
+    //     ["80%", "max-content"],
+    //     "Weapon Settings",
+    //     () => {
+    //         _CreateSampleEnt("weapon");
+    //         EntListContainer.Delete();
+    //     },
+    //     {
+    //         display: "flex",
+    //         position: "relative",
+    //         alignX: "center",
+    //         alignY: "center",
+    //         color: "black",
+    //         fontSize: 20,
+    //         index: 4,
+    //         border: {
+    //             borderImg: "black",
+    //             borderSize: 1,
+    //             borderStyle: "solid",
+    //             borderRadius: 25
+    //         }
+    //     },
+    //     true
+    // );
 
     const EntTypeTrigger = new GameButton(
         [0, 0],
@@ -305,7 +536,7 @@ function _selectEntType() {
     );
 
     EntListContainer.AttachToMe(EntTypeDef);
-    EntListContainer.AttachToMe(EntTypeWep);
+    // EntListContainer.AttachToMe(EntTypeWep);
     EntListContainer.AttachToMe(EntTypeTrigger);
 
     EntListContainer.SetID("SelectEntType")
@@ -313,77 +544,38 @@ function _selectEntType() {
 
 }
 
-function _MoveEnt(targetEnt) {
+function _CreateSampleEnt(type) {
 
-    let endPosRef = new Entity("Entity" + entCount, [mousePos[0] + 2, mousePos[1] + 2], [100, 100], ["",
-        {
-            border: {
-                borderImg: "red",
-                borderSize: 1,
-                borderStyle: "solid",
-                borderRadius: 0
-            }
-        }
-    ]);
+    res = undefined;
 
-    const updateEntPos = (e) => {
-        GetMousePos(e)
-        endPosRef.Teleport(mousePos, true);
+    switch (type) {
+        default:
+        case "default":
+            res = new Entity("Entity" + entCount, mousePos, [100, 100], "");
+            break;
+        // case "weapon":
+        //     res = new Weapon("Weapon" + entCount, "single", 15, 1000, 30, 300, 2.2, 4, 5, [
+        //         {
+        //             name: "attack",
+        //             path: "./assets/snd/weapon/Gunshot2.ogg",
+        //             loop: false,
+        //             vol: 0.5
+        //         }
+        //     ]);
+        //     break;
+        case "trigger":
+            res = new Trigger(mousePos, [100, 100], ["once"], () => { }, undefined);
+            break;
     }
 
-    const placeEnt = () => {
+    GetEnt("UtilityMenu").Delete();
+    __editor_onAction = false;
 
-        document.removeEventListener("mousemove", updateEntPos);
-
-        targetEnt.Teleport(mousePos, true);
-        endPosRef.Delete();
-
-        onAction = false;
-
-        document.removeEventListener("click", placeEnt);
-
-    }
-
-    document.addEventListener("mousemove", updateEntPos)
-
-    setTimeout(() => {
-        document.addEventListener("click", placeEnt)
-    }, tickrate);
 }
 
-function _SetEntImage(targetEnt) {
+function isMenuOpen(menuID) {
 
-    LoadFile('image/*', (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-            const image = e.target.result;
-
-            cl(image)
-
-            try {
-                targetEnt.SetModel(image);
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        };
-
-        reader.readAsDataURL(file);
-
-        reader.onerror = function (error) {
-            console.error('Error:', error);
-        };
-
-        reader.readAsText(file);
-    });
-}
-
-function isUtilMenuOpen() {
-
-    let stubUtil = GetEnt("UtilityMenu");
+    let stubUtil = GetEnt(menuID);
 
     return stubUtil != undefined;
 }

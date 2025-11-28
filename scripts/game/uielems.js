@@ -161,6 +161,49 @@ class GameButton extends GameText {
     }
 }
 
+class GameInputBox extends BaseUIElem {
+
+    action;
+    text;
+
+    constructor(pos, size, defVal, action, style, isHUDElem) {
+        super(pos, size, ["", style], isHUDElem);
+
+        this.OverrideInputAction(action);
+
+        this.docRef.classList.add("GameInputBox");
+        this.text = defVal
+
+        // replace the div with input
+        let orgParent = this.docRef;
+
+        this.docRef = document.createElement("input");
+        this.docRef.id = orgParent.id;
+        this.docRef.type = "text";
+        this.docRef.className = orgParent.className;
+        this.docRef.style.cssText = orgParent.style.cssText;
+
+        for (let attr of orgParent.attributes) {
+            if (attr.name !== 'id') {
+                this.docRef.setAttribute(attr.name, attr.value);
+            }
+        }
+
+        orgParent.parentNode.replaceChild(this.docRef, orgParent);
+
+        this.docRef.value = defVal;
+
+        this.docRef.addEventListener("input", async () => {
+            this.text = parseInt(this.docRef.value);
+            this.action();
+        });
+    }
+
+    OverrideInputAction(newAction) {
+        this.action = newAction;
+    }
+}
+
 window.addEventListener('resize', (e) => {
     _RescaleHUDElems();
 });
