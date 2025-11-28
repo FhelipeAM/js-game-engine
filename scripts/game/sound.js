@@ -6,7 +6,7 @@ function _RegisterSounds() {
 
 function RegisterSound(aname, apath, alooping, avol) {
 
-    sounds.push({name: aname, path: apath, loop: alooping, vol: avol})
+    sounds.push({ name: aname, path: apath, loop: alooping, vol: avol })
 }
 
 function GetSoundInfo(name) {
@@ -38,7 +38,7 @@ function PlaySound(soundInfo) {
     var audio = new Audio(PickRandomFromArray(soundInfo.path));
 
     if (!soundInfo.loop) {
-        audio.addEventListener("ended", function() {
+        audio.addEventListener("ended", function () {
             audio = null;
         });
     }
@@ -65,7 +65,7 @@ async function SndFadeOut(audio, time) {
 
     let volRef = audio.volume;
     let startTime = Date.now();
-    
+
     while (audio.volume > 0) {
 
         while (gamePaused)

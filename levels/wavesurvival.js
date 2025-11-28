@@ -1,3 +1,5 @@
+var hudElem_waveCounter = new GameText([-720, -420], ["max-content", "max-content"], "Wave: 0", HUDStyle, true)
+
 main();
 
 var wave = 1;
@@ -7,14 +9,17 @@ async function main() {
     SetPlayableAreaSize(10000, 10000);
     SetGameBackground("assets/img/testent2.png");
 
+    setHUDTextColor("#fff");
+    hudElem_waveCounter.docRef.style.color = "#fff";
+
     RegisterSound(
-        "game_start_song", 
+        "game_start_song",
         [
-            "assets/snd/music/bt_mp_menumusic.mp3", 
-            "assets/snd/music/bt_pybk_intro.mp3", 
+            "assets/snd/music/bt_mp_menumusic.mp3",
+            "assets/snd/music/bt_pybk_intro.mp3",
             "assets/snd/music/bt_london_westminster_action_lp.mp3",
-        ], 
-        false, 
+        ],
+        false,
         0.3
     );
 
@@ -156,6 +161,9 @@ function SetupPlayer() {
     });
 
     player.movespeed = 5;
+
+    hudContainer.AttachToMe(hudElem_waveCounter);
+
 }
 
 async function waveSpawner() {
@@ -165,7 +173,7 @@ async function waveSpawner() {
 
     while (player.health > 0) {
         if (wave < 10)
-            await s(wave);
+            await s(wave + 1);
         else
             await s(10);
 
@@ -174,8 +182,18 @@ async function waveSpawner() {
         player.weapons.damage += wave;
         CreateLootBox(false);
 
+        hudElem_waveCounter.SetText("Wave: " + wave);
 
         if (wave % 5 != 0) {
+
+            if (wave < 10) {
+                setHUDTextColor("#fff");
+                hudElem_waveCounter.docRef.style.color = "#fff";
+            } else {
+                setHUDTextColor("#ff6600");
+                hudElem_waveCounter.docRef.style.color = "#ff6600";
+            }
+
             PlaySound(GetSoundInfo("new_wave"));
 
             for (let i = 0; i < wave; i++) {
@@ -185,6 +203,10 @@ async function waveSpawner() {
             }
 
         } else {
+
+            setHUDTextColor("#ff0000");
+            hudElem_waveCounter.docRef.style.color = "#ff0000";
+
             PlaySound(GetSoundInfo("jugg_spawn"));
 
             let juggernaut = new Sentient("Sentient" + entCount, PickRandomPos(), [100, 130], "./assets/img/testent.jpg", "axis", true);
@@ -197,18 +219,18 @@ async function waveSpawner() {
             juggernaut.weapons.damage += wave;
 
             if (juggernaut.weapons.fireTime > 1)
-                juggernaut.weapons.fireTime -= (wave/10);
-            else 
+                juggernaut.weapons.fireTime -= (wave / 10);
+            else
                 juggernaut.weapons.fireTime = 1;
-            
+
             if (juggernaut.weapons.bulletSpeed < 14)
-                juggernaut.weapons.bulletSpeed += (wave/10);
-            else 
+                juggernaut.weapons.bulletSpeed += (wave / 10);
+            else
                 juggernaut.weapons.bulletSpeed = 14;
-            
+
             if (juggernaut.weapons.reloadTime < 1.5)
-                juggernaut.weapons.reloadTime -= (wave/10);
-            else 
+                juggernaut.weapons.reloadTime -= (wave / 10);
+            else
                 juggernaut.weapons.reloadTime += 1.5;
 
             enemies.push(juggernaut);
@@ -219,7 +241,7 @@ async function waveSpawner() {
         await ArrayEmptied(enemies);
 
         wave++;
-        sWaves ++;
+        sWaves++;
     }
 }
 
@@ -231,9 +253,10 @@ async function LootBoxSpawner() {
 
         let waittime = (player.weapons.curAmmoCount + player.health) / 10;
 
-        cl(waittime);
-
-        await s(10 + waittime);
+        if (waittime <= 45)
+            await s(10 + waittime);
+        else
+            await s(10 + 45);
     }
 }
 
@@ -376,6 +399,7 @@ async function GameOver() {
         "Ammo/health refills can be destroyed by hostiles and your own bullets.",
         "Pay attention to the appearance of hostiles, their skills vary accordingly.",
         "A new wave takes only up to 10 seconds to start, keep hostiles alive to plan for upcoming waves.",
+        "This survived waves counter is correct, you didn't beat this last one.",
     ];
 
     const survivedWaves = new GameText(

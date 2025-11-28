@@ -1,10 +1,48 @@
 var mousePos = [0, 0];
 
 function s(s) {
-    return new Promise(resolve => setTimeout(resolve, s*1000));
+
+    if (s <= 0) {
+        if (devMode)
+            console.warn("Waiting for an invalid amount of time.");
+        return;
+    }
+
+    return new Promise(async resolve => {
+        while (gamePaused) await _waitUntilUnpaused();
+        setTimeout(async () => {
+            while (gamePaused) await _waitUntilUnpaused();
+            resolve();
+        }, s * 1000);
+    });
 }
+
 function ms(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    if (ms <= 0) {
+        if (devMode)
+            console.warn("Waiting for an invalid amount of time.");
+        return;
+    }
+
+    return new Promise(async resolve => {
+        while (gamePaused) await _waitUntilUnpaused();
+
+        setTimeout(async () => {
+            while (gamePaused) await _waitUntilUnpaused();
+            resolve();
+        }, ms);
+    });
+}
+
+function _waitUntilUnpaused() {
+    return new Promise(resolve => {
+
+        const check = async () => {
+            if (!gamePaused) return resolve();
+            requestAnimationFrame(check);
+        };
+        check();
+    });
 }
 
 function cl(str) {
@@ -36,11 +74,22 @@ function posSnap(ent) {
     return stub;
 }
 
+function LoadFile(accept, action) {
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = accept;
+
+    fileInput.addEventListener('change', (event) => { action(event) });
+
+    fileInput.click();
+}
+
 async function D_DrawLine(start, end, color, duration) {
 
     if (!devMode) return;
 
-    var posRef = new Entity("EntDist"+entCount, start, [distance(start, end), 5], color)
+    var posRef = new Entity("EntDist" + entCount, start, [distance(start, end), 5], color)
     posRef.ignoreGravity = true;
     posRef.solid = false;
 
@@ -54,16 +103,16 @@ async function D_DrawText(start, text, acolor, duration) {
     if (!devMode) return;
 
     var text = new GameText(
-        start, 
+        start,
         [100, 100],
-        text, 
+        text,
         {
             alignX: "center",
             alignY: "center",
             color: acolor,
             fontSize: 64,
             index: 40
-        }, 
+        },
         false);
 
     await s(duration);
@@ -89,39 +138,38 @@ function PickRandomFromArray(paths) {
 
 //GetMousePos
 // document.addEventListener("mousedown", async (event) => {
-    
+
 //     var ClickRef = new Entity("mousePos"+entCount, mousePos, [100, 100], "red")
 //     ClickRef.Weight = 10;
 //     ClickRef.ignoreGravity = true;
 //     ClickRef.solid = false;
 // })
 
-document.addEventListener("mousemove", async (event) => {
-    GetMousePos(event)
-})
-
-
-//Has to be done this way because otherwise we can't unpause
-RegisterInput("g", "PauseGame", () => {});
-document.addEventListener("keyup", async (event) => {
-    
-    if (getActionFromKeybind(event.key).action == "PauseGame") {
-
-        if (!devMode) return;
-
-        gamePaused = !gamePaused;
-    }
-
-})
-
 function GetMousePos(event) {
 
     let valX = (event.clientX + window.scrollX);
     let valY = (event.clientY + window.scrollY);
-    
+
     mousePos = [valX, valY];
 }
 
 async function _StartSys() {
     await ms(tickrate);
+
+    document.addEventListener("mousemove", async (event) => {
+        GetMousePos(event)
+    })
+
+    //Has to be done this way because otherwise we can't unpause
+    RegisterInput("g", "PauseGame", () => { });
+    document.addEventListener("keyup", async (event) => {
+
+        if (getActionFromKeybind(event.key).action == "PauseGame") {
+
+            if (!devMode) return;
+
+            gamePaused = !gamePaused;
+        }
+
+    })
 }

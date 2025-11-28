@@ -22,11 +22,11 @@ function _initControls(target) {
     diry = movementTarget.pos[1];
 
     _baseMovement();
-    
+
 }
 
 function _baseMovement() {
-    
+
     RegisterInput("d", "moveRight", () => {
 
         if (movementTarget.pos[0] < GameSafeSpace.right - movementTarget.coll[1]) {
@@ -38,13 +38,13 @@ function _baseMovement() {
     });
 
     RegisterInput("w", "jump", async () => {
-        
+
         let jmpcheck = lastJumpTime + (jumpDelay * 1000) < timePassed;
 
         if (!movementTarget.midAir && jmpcheck) {
             lastJumpTime = timePassed;
             diry = movementTarget.pos[1] - 120;
-            
+
             movementTarget.Teleport([dirx, diry]);
 
         }
@@ -109,7 +109,7 @@ function _CameraScroll() {
     const maxScrollY = document.body.scrollHeight - viewportHeight;
 
     const clampedX = Math.max(0, Math.min(scrollX, maxScrollX));
-    const clampedY = Math.max(0, Math.min(scrollY, maxScrollY));    
+    const clampedY = Math.max(0, Math.min(scrollY, maxScrollY));
 
     window.scrollTo({
         left: clampedX,
@@ -140,7 +140,7 @@ function RegisterInput(aKey, aAction, aFunc) {
 function ChangeKeyForAction(actionName, newKey) {
 
     let stub = getActionByName(actionName);
-    
+
     if (!IsValidAction(stub.action)) {
         if (devMode)
             console.warn("Action is not valid.")
@@ -153,7 +153,7 @@ function ChangeKeyForAction(actionName, newKey) {
 function RemoveInput(actionName) {
 
     let stub = getActionByName(actionName);
-    
+
     if (!IsValidAction(stub.action)) {
         if (devMode)
             console.warn("Action is not valid.")
@@ -168,7 +168,7 @@ function getActionFromKeybind(bind) {
     let actionStub = {
         key: bind,
         action: "invalid",
-        func: () => {console.log("invalid action")}
+        func: () => { console.log("invalid action") }
     };
 
     KeyBinds.forEach((elem) => {
@@ -186,7 +186,7 @@ function getActionByName(actionName) {
     let actionStub = {
         key: "none",
         action: "invalid",
-        func: () => {console.log("invalid action")}
+        func: () => { console.log("invalid action") }
     };
 
     KeyBinds.forEach((elem) => {
@@ -213,7 +213,7 @@ function getKeybindFromAction(action) {
 
 function IsValidAction(actionName) {
     let valid = false;
-    
+
     KeyBinds.forEach((elem) => {
         if (elem.action == actionName) {
             valid = true;

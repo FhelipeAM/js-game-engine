@@ -20,6 +20,7 @@ class Sentient extends Entity {
 
     //methods
     onDeath;
+    onDamage;
 
     constructor(id, sp, ppr, img, team, hasAI) {
         super(id, sp, ppr, img);
@@ -33,7 +34,8 @@ class Sentient extends Entity {
 
         this.GiveWeapon(GetWeaponByName("DEFAULTMELEE"));
 
-        this.onDeath = () => {};
+        this.onDeath = () => { };
+        this.onDamage = () => { };
     }
 
     async _think() {
@@ -121,12 +123,13 @@ class Sentient extends Entity {
     }
 
     Damage(amount) {
-        
+
         if (this.health <= 0 || this.godMode)
             return;
 
         D_DrawText([this.pos[0], this.pos[1] - this.coll[1]], "-" + amount, "red", 2);
 
+        this.onDamage();
         this.health -= amount;
     }
 
@@ -152,7 +155,7 @@ class Sentient extends Entity {
         this.onDeath();
 
         this._Cleanup();
-        
+
     }
 
     async _Cleanup() {

@@ -15,16 +15,16 @@ class Trigger extends Entity {
                 }
             }
         }
-        
+
         super("trigger" + entCount, pos, size, ["", styleStub]);
-        
+
         if (ignoreEntTypes == undefined) {
             ignoreEntTypes = ["bullet", "uielem"];
         }
 
         this.type = type;
         this.ignoreEntTypes = ignoreEntTypes;
-        
+
         this.solid = false;
         this.ignoreGravity = true;
 

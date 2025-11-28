@@ -6,7 +6,7 @@ const HUDSpace = document.getElementById("HUD");
 const tickrate = 1;
 const gravity = 3;
 
-const devMode = true;
+var devMode = true;
 
 var loadedLevel = "";
 
@@ -22,9 +22,9 @@ async function __sysMain() {
 
     SetPlayableAreaSize(GameArea.style.width, GameArea.style.height);
 
-    await _NoLevelLoaded();
-
     _initControls(player);
+
+    await _NoLevelLoaded();
 
     _StartSys();
 
@@ -67,7 +67,7 @@ async function _gravityMain(ent) {
         ent.midAir = true;
     } else {
         if (ent.pos[1] + ent.coll[1] > GameSafeSpace.bottom) {
-            ent.pos[1] = GameSafeSpace.bottom-ent.coll[1];
+            ent.pos[1] = GameSafeSpace.bottom - ent.coll[1];
             ent.docRef.style.marginTop = ent.pos[1] + "px";
         }
 
@@ -111,7 +111,7 @@ async function _collMain(ent) {
                     // to the left side
                     if (!ent.IsToTheRight(ent2) && ent.weight < ent2.weight && ent.pos[0] > GameSafeSpace.left) {
                         ent.pos[0] = ent2.CenterOfMass()[0] - (ent2.coll[0] + (ent.coll[0] / 2.1));
-                    // to the right side
+                        // to the right side
                     } else if (ent.IsToTheRight(ent2) && ent.weight <= ent2.weight && ent.pos[0] + ent.coll[0] < GameSafeSpace.right) {
                         ent.pos[0] = ent2.CenterOfMass()[0] + (ent2.coll[0] / 2);
                     }
@@ -168,7 +168,7 @@ async function _interpolateMain(ent) {
         }
 
         ent.docRef.style.marginTop = ent.interpos[1] + "px";
-    }   
+    }
 
     const reachedX = Math.abs(ent.interpos[0] - ent.end[0]) <= ent.movespeed;
     const reachedY = Math.abs(ent.interpos[1] - ent.end[1]) <= ent.movespeed;
@@ -194,12 +194,6 @@ async function _NoLevelLoaded() {
             BGColor: "#000000ee",
             index: 45,
             gap: 20,
-            border: {
-                borderImg: "black",
-                borderSize: 3,
-                borderStyle: "solid",
-                borderRadius: 25
-            }
         },
         true,
         true
@@ -258,55 +252,53 @@ async function _NoLevelLoaded() {
         true
     );
 
-    // const CreateLevelBtn = new GameButton(
-    //     [0, 0],
-    //     ["100%", "100%"],
-    //     "Open level editor",
-    //     () => { },
-    //     {
-    //         display: "block",
-    //         position: "relative",
-    //         alignX: "center",
-    //         alignY: "center",
-    //         color: "white",
-    //         border: {
-    //             borderImg: "white",
-    //             borderSize: 2,
-    //             borderStyle: "solid",
-    //             borderRadius: 25
-    //         },
-    //         padding: 10,
-    //         fontSize: 50
-    //     },
-    //     true
-    // );
+    const CreateLevelBtn = new GameButton(
+        [0, 0],
+        ["100%", "100%"],
+        "Open level editor",
+        () => { _LevelEditorMain() },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "white",
+            textAlign: "center",
+            border: {
+                borderImg: "white",
+                borderSize: 2,
+                borderStyle: "solid",
+                borderRadius: 25
+            },
+            padding: 10,
+            fontSize: 30
+        },
+        true
+    );
 
     ErrorContainer.AttachToMe(errorMessage);
     ErrorContainer.AttachToMe(ButtonsContainer);
 
     ButtonsContainer.AttachToMe(LoadLevelBtn);
-    // ButtonsContainer.AttachToMe(CreateLevelBtn);
+    ButtonsContainer.AttachToMe(CreateLevelBtn);
 
     while (loadedLevel == "") {
         await new Promise(resolve => setTimeout(resolve, tickrate));
     }
 
-    gamePaused = false;
+    if (loadedLevel != "editor")
+        gamePaused = false;
 
     ErrorContainer.Delete();
     ButtonsContainer.Delete();
     errorMessage.Delete();
     LoadLevelBtn.Delete();
-    // CreateLevelBtn.Delete();
+    CreateLevelBtn.Delete();
 }
 
 function _levelLoader() {
 
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = '.js,.javascript,text/javascript';
-
-    fileInput.addEventListener('change', function (event) {
+    LoadFile('.js,.javascript,text/javascript', (event) => {
         const file = event.target.files[0];
         if (!file) return;
 
@@ -329,9 +321,6 @@ function _levelLoader() {
 
         reader.readAsText(file);
     });
-
-    fileInput.click();
-
 }
 
 function SetPlayableAreaSize(x, y) {

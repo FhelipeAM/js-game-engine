@@ -1,11 +1,13 @@
 const hudContainer = new GameContainer([0, 0], ["100vw", "100vh"], {
     display: "flex",
     alignX: "center",
-    alignY: "center"
+    alignY: "center",
 }, true, true);
 
-var hudElem_health = new GameText([-850, 800], [50, 500], "", { position: "absolute", color: "red", alignX: "center", alignY: "center", fontSize: 80 }, true)
-var hudElem_ammo = new GameText([600, 800],  [50, 500], "", { position: "absolute", color: "red", alignX: "center", alignY: "center", fontSize: 80 }, true)
+var HUDStyle = { position: "absolute", color: "#000", alignX: "center", alignY: "center", fontSize: 80 }
+
+var hudElem_health = new GameText([-850, 800], [50, 500], "", HUDStyle, true)
+var hudElem_ammo = new GameText([600, 800], [50, 500], "", HUDStyle, true)
 
 hudContainer.AttachToMe(hudElem_health);
 hudContainer.AttachToMe(hudElem_ammo);
@@ -27,6 +29,8 @@ async function UpdateHUD() {
     }
 }
 
-async function TestFunc() {
-    alert("Evil hello world")
-} 
+//manual override
+function setHUDTextColor(col) {
+    hudElem_health.docRef.style.color = col;
+    hudElem_ammo.docRef.style.color = col;
+}

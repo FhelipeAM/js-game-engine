@@ -87,32 +87,32 @@ class Weapon {
         }
 
         this.LFT = timePassed;
-        
+
         if (!sset.infiniteAmmo)
             this.curAmmoCount--;
 
         let sound = this.GetWepSoundInfo("attack");
-        
+
         new Bullet("bullet" + entCount, sset.CenterOfMass(), this.calculateTargetPoint(sset.CenterOfMass(), sset.target.CenterOfMass(), this.range), this.damage, sset.team, this.bulletSpeed, this.range, sound)
     }
 
     calculateTargetPoint(startPos, targetPos, range) {
         const dx = targetPos[0] - startPos[0];
         const dy = targetPos[1] - startPos[1];
-        
+
         const distance = Math.sqrt(dx * dx + dy * dy);
-        
+
         if (distance <= range) {
             return targetPos;
         }
-        
+
         const scale = range / distance;
         return [
             startPos[0] + dx * scale,
             startPos[1] + dy * scale
         ];
     }
-    
+
 
     async Reload(sset) {
         if (this.curAmmoCountRes <= 0 || this.reloading || this.curAmmoCount >= this.ammoCount)
@@ -131,7 +131,7 @@ class Weapon {
 
             this.curAmmoCount = this.curAmmoCount + this.curAmmoCountRes;
             this.curAmmoCountRes = 0;
-        } 
+        }
 
 
         this.reloading = false;
@@ -221,7 +221,7 @@ class Bullet extends Entity {
 
         if (this.collTarget.entType() != 'sentient')
             return false;
-        
+
         if (this.collTarget.dead)
             return false;
 

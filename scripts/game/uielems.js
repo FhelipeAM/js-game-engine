@@ -1,7 +1,7 @@
 var HudElems = [];
 
 class BaseUIElem extends Entity {
-    
+
     HUDElem = false;
     style;
 
@@ -9,7 +9,7 @@ class BaseUIElem extends Entity {
         super("UIElem" + entCount, pos, size);
 
         this.style = model;
-        
+
         this.docRef.classList.add("UIElem");
 
         this.ignoreGravity = true;
@@ -36,7 +36,7 @@ class BaseUIElem extends Entity {
         this.docRef.style.opacity = 1;
         let opacity = 1;
         let startTime = Date.now();
-        
+
         while (opacity > 0) {
 
             while (gamePaused)
@@ -61,9 +61,9 @@ class BaseUIElem extends Entity {
         this.docRef.style.opacity = 0;
         let opacity = 0;
         let startTime = Date.now();
-        
+
         while (opacity < 1) {
-            
+
             while (gamePaused)
                 await ms(tickrate)
 
@@ -111,7 +111,7 @@ class GameText extends BaseUIElem {
 }
 
 class GameContainer extends BaseUIElem {
-    
+
     constructor(pos, size, style, isHUDElem, scaleWithScreen) {
         super(pos, size, ["", style], isHUDElem);
 
@@ -120,13 +120,28 @@ class GameContainer extends BaseUIElem {
     }
 
     AttachToMe(elem) {
-        elem.docRef.parentNode.removeChild(elem.docRef);
+
+        if (elem.docRef.parentNode != undefined)
+            elem.docRef.parentNode.removeChild(elem.docRef);
+
         this.docRef.appendChild(elem.docRef);
+    }
+
+    Detach(elem) {
+
+        if (elem.docRef.parentNode != this.docRef) {
+            if (devMode)
+                console.warn("Trying to detach element but it's not attached.")
+            return;
+        }
+
+        this.docRef.removeChild(elem.docRef);
+        HUDSpace.appendChild(elem.docRef);
     }
 }
 
 class GameButton extends GameText {
-    
+
     action;
 
     constructor(pos, size, text, action, style, isHUDElem) {
