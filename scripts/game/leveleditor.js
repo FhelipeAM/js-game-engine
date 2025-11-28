@@ -365,7 +365,7 @@ function _SizeEnt(targetEnt) {
 
 function _MoveEnt(targetEnt) {
 
-    let endPosRef = new Entity("Entity" + entCount, mousePos, [100, 100], ["",
+    let endPosRef = new Entity("Entity" + entCount, mousePos, targetEnt.coll, ["",
         {
             border: {
                 borderImg: "red",
