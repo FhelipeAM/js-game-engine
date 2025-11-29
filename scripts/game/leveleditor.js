@@ -232,6 +232,36 @@ function _UtilityMenu(selectedEnt) {
             true
         );
 
+        var DeleteBtn = undefined; 
+
+        if (selectedEnt != player) {
+            DeleteBtn = new GameButton(
+                [0, 0],
+                ["100%", "max-content"],
+                "Delete",
+                () => {
+                    selectedEnt.Delete();
+                    UtilContainer.Delete();
+                    __editor_onAction = false;
+                },
+                {
+                    display: "flex",
+                    position: "relative",
+                    alignX: "center",
+                    alignY: "center",
+                    color: "red",
+                    fontSize: 20,
+                    border: {
+                        borderImg: "red",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 25
+                    }
+                },
+                true
+            );
+        }
+
         let SetEntImgBtn = undefined;
 
         if (selectedEnt.entType() != "trigger") {
@@ -298,6 +328,8 @@ function _UtilityMenu(selectedEnt) {
             UtilContainer.AttachToMe(GiveWeaponBtn);
         UtilContainer.AttachToMe(moveToBtn);
         UtilContainer.AttachToMe(SizeBtn);
+        if (selectedEnt != player)
+            UtilContainer.AttachToMe(DeleteBtn);
 
     }
 
@@ -333,6 +365,7 @@ function _GiveSentWep(targetEnt) {
 
     _GenerateWeaponList(WeaponsContainer, (e) => {
         targetEnt.GiveWeapon(GetWeaponByName(e.name))
+        __editor_onAction = false;
         WeaponsContainer.Delete();
     });
 
@@ -901,7 +934,7 @@ function _VisEntInfo(targetEnt) {
     else
         EditNameContainer.AttachToMe(EntNameText);
 
-    if (targetEnt != weaponTemplate.get("DEFAULTMELEE")) {
+    if (targetEnt != weaponTemplate.get("DEFAULTMELEE") && targetEnt != player) {
 
         const EditNameField = new GameButton(
             [0, 0],
