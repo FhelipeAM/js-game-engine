@@ -288,7 +288,6 @@ async function _NoLevelLoaded() {
 
     if (loadedLevel != "editor") {
         gamePaused = false;
-        devMode = false;
     }
 
     ErrorContainer.Delete();

@@ -78,6 +78,10 @@ class Trigger extends Entity {
             return;
         }
     }
+
+    entType() {
+        return "trigger";
+    }
 }
 
 function _AvailableTriggerTypes() {

@@ -11,7 +11,6 @@ class Entity {
     coll = [0, 0];
     collTarget;
     solid = true;
-    trigger = true;
     weight = 1;
     mdl = "";
     docRef;
@@ -224,6 +223,9 @@ class Entity {
 
             if ("mixBlend" in dat)
                 this.docRef.style.backgroundBlendMode = dat["mixBlend"];
+
+            if ("overflow" in dat)
+                this.docRef.style.overflow = dat["overflow"];
 
             if ("border" in dat) {
 

@@ -113,9 +113,9 @@ async function DrawText(start, text, acolor, duration) {
         },
         false);
 
-    await s(duration);
+    text.MoveTo([text.pos[0], text.pos[1] - 100], false);
 
-    await text.FadeOut(1);
+    await text.FadeOut(duration);
 
     text.Delete();
 }

@@ -161,12 +161,68 @@ class GameButton extends GameText {
     }
 }
 
+class GameCheckbox extends GameButton {
+
+    checked;
+
+    constructor(pos, size, checked, action, style, isHUDElem) {
+
+        if (style == {} || style == undefined) {
+
+            style = {
+                position: "relative",
+                color: "black",
+                BGColor: "transparent",
+                border: {
+                    borderImg: "black",
+                    borderSize: 1,
+                    borderStyle: "solid",
+                    borderRadius: "15%"
+                }
+            }
+        }
+
+        if (typeof checked != "boolean") {
+            if (devMode)
+                console.warn("Invalid value type for checkbox!");
+            checked = false;
+        }
+
+        super(pos, [size, size], "", action, style, isHUDElem);
+
+        this.OverrideCheckboxAction(action);
+
+        this.RedrawCheckbox();
+
+        this.docRef.addEventListener("click", async () => {
+            this.checked = !this.checked;
+            this.RedrawCheckbox();
+        });
+    }
+
+    RedrawCheckbox() {
+        if (this.checked) {
+            this.SetModel("assets/img/editor/checkbox.png");
+        } else {
+            this.SetModel("transparent");
+        }
+    }
+
+    OverrideCheckboxAction(newAction) {
+        this.action = newAction;
+    }
+
+    GetValue() {
+        return this.checked;
+    }
+}
+
 class GameInputBox extends BaseUIElem {
 
     action;
     text;
 
-    constructor(pos, size, defVal, action, style, isHUDElem) {
+    constructor(pos, size, defVal, impType, action, style, isHUDElem) {
         super(pos, size, ["", style], isHUDElem);
 
         this.OverrideInputAction(action);
@@ -179,7 +235,7 @@ class GameInputBox extends BaseUIElem {
 
         this.docRef = document.createElement("input");
         this.docRef.id = orgParent.id;
-        this.docRef.type = "text";
+        this.docRef.type = impType;
         this.docRef.className = orgParent.className;
         this.docRef.style.cssText = orgParent.style.cssText;
 
@@ -194,13 +250,17 @@ class GameInputBox extends BaseUIElem {
         this.docRef.value = defVal;
 
         this.docRef.addEventListener("input", async () => {
-            this.text = parseInt(this.docRef.value);
+            this.text = this.docRef.value;
             this.action();
         });
     }
 
     OverrideInputAction(newAction) {
         this.action = newAction;
+    }
+
+    GetValue() {
+        return this.text;
     }
 }
 

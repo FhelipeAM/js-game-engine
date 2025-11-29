@@ -1,7 +1,16 @@
 let __editor_target = undefined;
 let __editor_onAction = false;
 
+let __editor_levelSettings = undefined;
+
 function _LevelEditorMain() {
+
+    window.scrollTo(0, 0);
+
+    hudElem_health.Delete();
+    hudElem_ammo.Delete();
+
+    _StartLevelSettings();
 
     devMode = true;
 
@@ -63,14 +72,13 @@ async function _SelectEnt() {
 function _UtilityMenu(selectedEnt) {
 
     if (isMenuOpen("UtilityMenu")) {
-        let stubUtil = GetEnt("UtilityMenu")
-        stubUtil.Delete();
+        CloseMenu("UtilityMenu")
         return;
     }
 
     const UtilContainer = new GameContainer(
         mousePos,
-        [200, 200],
+        [200, "max-content"],
         {
             display: "flex",
             flexDir: "column",
@@ -129,7 +137,6 @@ function _UtilityMenu(selectedEnt) {
             "X",
             () => {
                 UtilContainer.Delete();
-                // isMenuOpen("EntSizeEditor") ? GetEnt("EntSizeEditor").Delete() : "" 
                 __editor_onAction = false;
             },
             {
@@ -150,12 +157,12 @@ function _UtilityMenu(selectedEnt) {
             true
         );
 
-        const SetEntImgBtn = new GameButton(
+        const GetEntInfoBtn = new GameButton(
             [0, 0],
             ["100%", "max-content"],
-            "Set ent image",
+            "Entity info",
             () => {
-                _SetEntImage(selectedEnt);
+                _VisEntInfo(selectedEnt);
                 UtilContainer.Delete();
             },
             {
@@ -225,8 +232,70 @@ function _UtilityMenu(selectedEnt) {
             true
         );
 
+        let SetEntImgBtn = undefined;
+
+        if (selectedEnt.entType() != "trigger") {
+            SetEntImgBtn = new GameButton(
+                [0, 0],
+                ["100%", "max-content"],
+                "Change image",
+                () => {
+                    _SetEntImage(selectedEnt);
+                    UtilContainer.Delete();
+                },
+                {
+                    display: "flex",
+                    position: "relative",
+                    alignX: "center",
+                    alignY: "center",
+                    color: "black",
+                    fontSize: 20,
+                    border: {
+                        borderImg: "black",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 25
+                    }
+                },
+                true
+            );
+        }
+
+        let GiveWeaponBtn = undefined;
+
+        if (selectedEnt.entType() == "sentient") {
+            GiveWeaponBtn = new GameButton(
+                [0, 0],
+                ["100%", "max-content"],
+                "Give weapon",
+                () => {
+                    _GiveSentWep(selectedEnt);
+                    UtilContainer.Delete();
+                },
+                {
+                    display: "flex",
+                    position: "relative",
+                    alignX: "center",
+                    alignY: "center",
+                    color: "black",
+                    fontSize: 20,
+                    border: {
+                        borderImg: "black",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 25
+                    }
+                },
+                true
+            );
+        }
+
         UtilContainer.AttachToMe(CloseMenuBtn);
-        UtilContainer.AttachToMe(SetEntImgBtn);
+        UtilContainer.AttachToMe(GetEntInfoBtn);
+        if (selectedEnt.entType() != "trigger")
+            UtilContainer.AttachToMe(SetEntImgBtn);
+        if (selectedEnt.entType() == "sentient")
+            UtilContainer.AttachToMe(GiveWeaponBtn);
         UtilContainer.AttachToMe(moveToBtn);
         UtilContainer.AttachToMe(SizeBtn);
 
@@ -234,6 +303,38 @@ function _UtilityMenu(selectedEnt) {
 
     UtilContainer.SetID("UtilityMenu")
     UtilContainer.docRef.style.borderTopLeftRadius = 0;
+
+}
+
+function _GiveSentWep(targetEnt) {
+
+    const WeaponsContainer = new GameContainer(
+        [targetEnt.pos[0] + targetEnt.coll[0] + 10, targetEnt.pos[1]],
+        [200, "max-content"],
+        {
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
+            alignY: "top",
+            BGColor: "#ffffff",
+            padding: 20,
+            index: 11,
+            gap: 10,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false,
+        true
+    );
+
+    _GenerateWeaponList(WeaponsContainer, (e) => {
+        targetEnt.GiveWeapon(GetWeaponByName(e.name))
+        WeaponsContainer.Delete();
+    });
 
 }
 
@@ -279,7 +380,7 @@ function _SizeEnt(targetEnt) {
         endSizeRef.Delete();
     };
 
-    const Width = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], targetEnt.coll[0] + UOS,
+    const Width = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], targetEnt.coll[0] + UOS, "text",
         () => {
             updateEntSize([Width.text, Height.text])
         },
@@ -302,7 +403,7 @@ function _SizeEnt(targetEnt) {
         false
     );
 
-    const Height = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], targetEnt.coll[1] + UOS,
+    const Height = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], targetEnt.coll[1] + UOS, "text",
         () => {
             updateEntSize([Width.text, Height.text])
         },
@@ -357,7 +458,6 @@ function _SizeEnt(targetEnt) {
     SizeTextContainer.AttachToMe(Confirm);
 
     const updateEntSize = (newSize) => {
-        cl(newSize)
         endSizeRef.SetSize(newSize);
         SizeTextContainer.Teleport([endSizeRef.pos[0] + endSizeRef.coll[0] + 10, endSizeRef.pos[1]], true);
     }
@@ -483,31 +583,31 @@ function _selectEntType() {
         true
     );
 
-    // const EntTypeWep = new GameButton(
-    //     [0, 0],
-    //     ["80%", "max-content"],
-    //     "Weapon Settings",
-    //     () => {
-    //         _CreateSampleEnt("weapon");
-    //         EntListContainer.Delete();
-    //     },
-    //     {
-    //         display: "flex",
-    //         position: "relative",
-    //         alignX: "center",
-    //         alignY: "center",
-    //         color: "black",
-    //         fontSize: 20,
-    //         index: 4,
-    //         border: {
-    //             borderImg: "black",
-    //             borderSize: 1,
-    //             borderStyle: "solid",
-    //             borderRadius: 25
-    //         }
-    //     },
-    //     true
-    // );
+    const EntTypeSentient = new GameButton(
+        [0, 0],
+        ["80%", "max-content"],
+        "Sentient",
+        () => {
+            _CreateSampleEnt("sentient");
+            EntListContainer.Delete();
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "black",
+            fontSize: 20,
+            index: 4,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        true
+    );
 
     const EntTypeTrigger = new GameButton(
         [0, 0],
@@ -536,7 +636,7 @@ function _selectEntType() {
     );
 
     EntListContainer.AttachToMe(EntTypeDef);
-    // EntListContainer.AttachToMe(EntTypeWep);
+    EntListContainer.AttachToMe(EntTypeSentient);
     EntListContainer.AttachToMe(EntTypeTrigger);
 
     EntListContainer.SetID("SelectEntType")
@@ -546,30 +646,617 @@ function _selectEntType() {
 
 function _CreateSampleEnt(type) {
 
-    res = undefined;
+    let res = undefined;
 
     switch (type) {
         default:
         case "default":
             res = new Entity("Entity" + entCount, mousePos, [100, 100], "");
             break;
-        // case "weapon":
-        //     res = new Weapon("Weapon" + entCount, "single", 15, 1000, 30, 300, 2.2, 4, 5, [
-        //         {
-        //             name: "attack",
-        //             path: "./assets/snd/weapon/Gunshot2.ogg",
-        //             loop: false,
-        //             vol: 0.5
-        //         }
-        //     ]);
-        //     break;
+        case "weapon":
+            res = new Weapon("Weapon" + entCount, "single", 15, 1000, 30, 300, 2.2, 4, 5, [
+                {
+                    name: "attack",
+                    path: "./assets/snd/weapon/Gunshot2.ogg",
+                    loop: false,
+                    vol: 0.5
+                }
+            ]);
+            break;
+        case "sentient":
+            res = new Sentient("Sentient" + entCount, mousePos, [100, 100], "", "allies", true);
+            break;
         case "trigger":
             res = new Trigger(mousePos, [100, 100], ["once"], () => { }, undefined);
             break;
     }
 
-    GetEnt("UtilityMenu").Delete();
+    if (isMenuOpen("UtilityMenu"))
+        CloseMenu("UtilityMenu");
+
     __editor_onAction = false;
+
+    return res;
+
+}
+
+function _StartLevelSettings() {
+
+    __editor_levelSettings = new GameButton(
+        [920, -430],
+        [80, 80],
+        "",
+        () => {
+            _LevelSidebar()
+        },
+        {},
+        true
+    );
+
+    __editor_levelSettings.SetModel("assets/img/editor/settings.png");
+    hudContainer.AttachToMe(__editor_levelSettings);
+}
+
+function _LevelSidebar() {
+
+    if (isMenuOpen("EntSideBar")) {
+        CloseMenu("EntSideBar");
+        return;
+    }
+
+    const SettingsContainer = new GameContainer(
+        [0, 0],
+        [300, "100%"],
+        {
+            position: "absolute",
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
+            alignY: "center",
+            BGColor: "#ffffff",
+            index: 45,
+            padding: 15,
+            gap: 10,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid"
+            }
+        },
+        false,
+        true
+    );
+    SettingsContainer.SetID("EntSideBar");
+
+    const weaponSectionText = new GameText([0, 0], ["max-content", "max-content"], "Registered weapons: ", {
+        position: "relative",
+        fontSize: 30
+    }, true);
+    SettingsContainer.AttachToMe(weaponSectionText);
+
+    const WeaponsContainer = new GameContainer(
+        [0, 0],
+        ["max-content", "max-content"],
+        {
+            position: "relative",
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
+            alignY: "center",
+            BGColor: "#ffffff",
+            padding: 15,
+            gap: 10,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 10
+            }
+        },
+        false,
+        true
+    );
+    SettingsContainer.AttachToMe(WeaponsContainer);
+
+    _GenerateWeaponList(WeaponsContainer, _VisEntInfo);
+
+    const AddWepBtn = new GameButton(
+        [0, 0],
+        ["80%", "max-content"],
+        "New Weapon",
+        () => {
+            _VisEntInfo(_CreateSampleEnt("weapon"));
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "green",
+            fontSize: 20,
+            index: 4,
+            border: {
+                borderImg: "green",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        true
+    );
+
+    WeaponsContainer.AttachToMe(AddWepBtn);
+}
+
+function _VisEntInfo(targetEnt) {
+
+    if (isMenuOpen("EntSideBar")) {
+        CloseMenu("EntSideBar");
+    }
+
+    //centralizer and rescaler
+    const RootContainer = new GameContainer(
+        [0, 0],
+        ["100%", "100%"],
+        {
+            position: "absolute",
+            display: "flex",
+            alignX: "center",
+            alignY: "center",
+            index: 15
+        },
+        true,
+        true
+    );
+    RootContainer.SetID("EntInfoBox");
+
+    const InfoContainer = new GameContainer(
+        [0, 0],
+        [300, 400],
+        {
+            position: "relative",
+            display: "flex",
+            flexDir: "column",
+            alignX: "left",
+            alignY: "top",
+            BGColor: "#ffffff",
+            padding: 15,
+            gap: 10,
+            index: 16,
+            overflow: "scroll",
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 10
+            }
+        },
+        true,
+        false
+    );
+
+    const CloseMenuBtn = new GameButton(
+        [0, 0],
+        [15, "max-content"],
+        "X",
+        () => {
+            RootContainer.Delete();
+            __editor_onAction = false;
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "red",
+            fontSize: 15,
+            padding: 5,
+            border: {
+                borderImg: "red",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: "50%"
+            }
+        },
+        true
+    );
+
+    let EntNameText = undefined;
+    let EntIdText = undefined;
+
+    if (targetEnt.entType() == "weapon") {
+
+        EntNameText = new GameText([0, 0], ["max-content", "max-content"], "name: " + targetEnt.name, {
+            position: "relative",
+        }, true);
+
+    } else {
+
+        EntIdText = new GameText([0, 0], ["max-content", "max-content"], "docRef ID: " + targetEnt.docRef.id, {
+            position: "relative",
+        }, true);
+    }
+
+    const EditNameContainer = new GameContainer(
+        [0, 0],
+        ["100%", "max-content"],
+        {
+            position: "relative",
+            display: "flex",
+            alignX: "left",
+            alignY: "center",
+            gap: 20,
+            index: 17
+        },
+        true,
+        false
+    );
+
+    RootContainer.AttachToMe(InfoContainer);
+    InfoContainer.AttachToMe(CloseMenuBtn);
+    InfoContainer.AttachToMe(EditNameContainer);
+
+    if (targetEnt.entType() != "weapon")
+        EditNameContainer.AttachToMe(EntIdText);
+    else
+        EditNameContainer.AttachToMe(EntNameText);
+
+    if (targetEnt != weaponTemplate.get("DEFAULTMELEE")) {
+
+        const EditNameField = new GameButton(
+            [0, 0],
+            ["max-content", "max-content"],
+            "Edit",
+            () => {
+                if (targetEnt.entType() != "weapon")
+                    _EditEntParam(targetEnt, targetEnt.docRef.id, targetEnt.docRef.id, typeof targetEnt.docRef.id);
+                else
+                    _EditEntParam(targetEnt, "name", targetEnt.name, typeof targetEnt.name);
+            },
+            {
+                display: "flex",
+                position: "relative",
+                alignX: "center",
+                alignY: "center",
+                color: "blue",
+                fontSize: 10,
+                padding: 5,
+                border: {
+                    borderImg: "blue",
+                    borderSize: 1,
+                    borderStyle: "solid",
+                    borderRadius: 25
+                }
+            },
+            false
+        );
+
+        EditNameContainer.AttachToMe(EditNameField);
+
+    }
+
+    for (const key in targetEnt) {
+
+        let readOnly = false;
+
+        // hard coded because there is no way to dinamically tell
+        // which fields are supposed to be not editable.
+        // at least that i could think of
+        if (key == "name" || key == "docRef" || key == "collTarget" ||
+            key == "mdl" || key == "pos" || key == "end" || key == "linkedTo" ||
+            key == "linkedToOffset" || key == "shouldFall" || key == "falling" ||
+            key == "midAir" || key == "iIgnoreGravity" || key == "interpolating" ||
+            key == "dead" || key == "target" || key == "interpos" || key == "reloading" ||
+            key == "curAmmoCount" || key == "curAmmoCountRes" || key == "LFT" ||
+            typeof targetEnt[key] == "function") {
+            continue;
+        }
+
+        if (key == "weapons" || targetEnt == weaponTemplate.get("DEFAULTMELEE") || 
+        (targetEnt == player && key == "aiEnabled")) {
+
+            readOnly = true;
+        }
+
+        if (Array.isArray(targetEnt[key])) {
+
+            const EntKeyText = new GameText([0, 0], ["max-content", "max-content"], key + ": ", {
+                position: "relative",
+            }, true);
+
+            const ArrayContainer = new GameContainer(
+                [0, 0],
+                ["max-content", "max-content"],
+                {
+                    position: "relative",
+                    display: "flex",
+                    flexDir: "column",
+                    alignX: "left",
+                    alignY: "top",
+                    BGColor: "#ffffff",
+                    padding: 15,
+                    gap: 10,
+                    border: {
+                        borderImg: "black",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 10
+                    }
+                },
+                true,
+                false
+            );
+            InfoContainer.AttachToMe(EntKeyText)
+            InfoContainer.AttachToMe(ArrayContainer);
+
+            for (const key2 in targetEnt[key]) {
+
+                const EntKeyText = new GameText([0, 0], ["max-content", "max-content"], key2 + ": " + targetEnt[key][key2], {
+                    position: "relative",
+                }, true);
+
+                ArrayContainer.AttachToMe(EntKeyText);
+            }
+
+            continue;
+
+        } else if (key == "weapons") {
+
+            const EntKeyText = new GameText([0, 0], ["max-content", "max-content"], key + ": " + targetEnt[key].name, {
+                position: "relative",
+            }, true);
+
+            InfoContainer.AttachToMe(EntKeyText);
+
+            continue;
+        }
+
+        const KeyContainer = new GameContainer(
+            [0, 0],
+            ["max-content", "max-content"],
+            {
+                position: "relative",
+                display: "flex",
+                alignX: "around",
+                alignY: "center",
+                BGColor: "#ffffff",
+                gap: 10,
+                padding: 5,
+            },
+            true,
+            false
+        );
+
+        const EntKeyText = new GameText([0, 0], ["max-content", "max-content"], key + ": " + targetEnt[key], {
+            position: "relative",
+        }, true);
+
+        InfoContainer.AttachToMe(KeyContainer);
+        KeyContainer.AttachToMe(EntKeyText);
+
+        if (!readOnly) {
+            const EditFieldBtn = new GameButton(
+                [0, 0],
+                ["max-content", "max-content"],
+                "Edit",
+                () => {
+                    _EditEntParam(targetEnt, key, targetEnt[key], typeof targetEnt[key]);
+                },
+                {
+                    display: "flex",
+                    position: "relative",
+                    alignX: "center",
+                    alignY: "center",
+                    color: "blue",
+                    fontSize: 10,
+                    padding: 5,
+                    border: {
+                        borderImg: "blue",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 25
+                    }
+                },
+                false
+            );
+
+            KeyContainer.AttachToMe(EditFieldBtn);
+
+        }
+    }
+}
+
+function _GenerateWeaponList(hostContainer, action) {
+
+    weaponTemplate.forEach((wep) => {
+        const TestBtn = new GameButton(
+            [0, 0],
+            ["100%", "max-content"],
+            wep.name,
+            () => {
+                action(wep);
+            },
+            {
+                display: "flex",
+                position: "relative",
+                alignX: "center",
+                alignY: "center",
+                color: "black",
+                fontSize: 20,
+                padding: 5,
+                border: {
+                    borderImg: "black",
+                    borderSize: 1,
+                    borderStyle: "solid",
+                    borderRadius: 25
+                }
+            },
+            false
+        );
+
+        hostContainer.AttachToMe(TestBtn);
+    })
+}
+
+function _EditEntParam(targetEnt, key, curVal, valType) {
+
+    if (isMenuOpen("EditElemParam"))
+        return;
+
+    let inputBox = undefined;
+
+    switch (valType) {
+        case "boolean":
+            inputBox = new GameCheckbox([0, 0], 20, curVal, () => { }, undefined, true)
+            break;
+        case "number":
+        case "string":
+            inputBox = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], curVal, valType == "number" ? "number" : "text",
+                () => { },
+                {
+                    display: "flex",
+                    position: "relative",
+                    alignX: "left",
+                    alignY: "center",
+                    BGColor: "#ffffff",
+                    index: 5,
+                    padding: 10,
+                    border:
+                    {
+                        borderImg: "black",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 25
+                    }
+                },
+                false
+            );
+            break;
+        default:
+            if (devMode)
+                console.warn("Type of value was not supported by the function! value: " + valType);
+            return;
+    }
+
+    const RootContainer = new GameContainer(
+        [0, 0],
+        ["100%", "100%"],
+        {
+            display: "flex",
+            position: "absolute",
+            BGColor: "#33333333",
+            alignX: "center",
+            alignY: "center",
+            index: 15
+        },
+        true,
+        true
+    );
+    RootContainer.SetID("EditElemParam");
+
+    const EditInfoContainer = new GameContainer(
+        [0, 0],
+        [250, "max-content"],
+        {
+            position: "relative",
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
+            alignY: "center",
+            BGColor: "#ffffff",
+            padding: 15,
+            gap: 10,
+            index: 16,
+            overflow: "scroll",
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 10
+            }
+        },
+        true,
+        false
+    );
+
+    RootContainer.AttachToMe(EditInfoContainer);
+
+    const ActionBtnContainer = new GameContainer(
+        [0, 0],
+        ["100%", "max-content"],
+        {
+            position: "relative",
+            display: "flex",
+            alignX: "center",
+            alignY: "center",
+            gap: 20,
+            index: 17
+        },
+        true,
+        false
+    );
+
+    const ApplyBtn = new GameButton(
+        [0, 0],
+        ["50%", "max-content"],
+        "Apply",
+        () => {
+            if (typeof valType == "number")
+                targetEnt[key] = Number(inputBox.GetValue());
+            else
+                targetEnt[key] = inputBox.GetValue();
+
+            RootContainer.Delete();
+            CloseMenu("EntInfoBox");
+            __editor_onAction = false;
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "green",
+            fontSize: 20,
+            padding: 5,
+            border: {
+                borderImg: "green",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false
+    );
+
+    const CancelBtn = new GameButton(
+        [0, 0],
+        ["50%", "max-content"],
+        "Cancel",
+        () => {
+            RootContainer.Delete();
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "red",
+            fontSize: 20,
+            padding: 5,
+            border: {
+                borderImg: "red",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false
+    );
+
+    EditInfoContainer.AttachToMe(inputBox);
+    EditInfoContainer.AttachToMe(ActionBtnContainer);
+    ActionBtnContainer.AttachToMe(ApplyBtn);
+    ActionBtnContainer.AttachToMe(CancelBtn);
 
 }
 
@@ -578,4 +1265,11 @@ function isMenuOpen(menuID) {
     let stubUtil = GetEnt(menuID);
 
     return stubUtil != undefined;
+}
+
+function CloseMenu(menuID) {
+
+    let stubUtil = GetEnt(menuID);
+
+    stubUtil.Delete();
 }
