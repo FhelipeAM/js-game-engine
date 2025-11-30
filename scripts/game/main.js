@@ -128,6 +128,7 @@ async function _collMain(ent) {
 
                 //to avoid desync
                 ent.Teleport([ent.pos[0], ent.pos[1]], false);
+                ent.onCollide();
 
                 return;
             }

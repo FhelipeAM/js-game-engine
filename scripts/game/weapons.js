@@ -79,7 +79,7 @@ class Weapon {
 
     Shoot(sset) {
 
-        if (this.LFT + (this.fireTime * 10) > timePassed || this.reloading) return;
+        if (this.LFT + (this.fireTime * 10) > timePassed || this.reloading || this.ammoCount == 0) return;
 
         if (this.curAmmoCount == 0) {
             PlaySound(this.GetWepSoundInfo("dryfire"));

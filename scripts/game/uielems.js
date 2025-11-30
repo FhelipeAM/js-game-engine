@@ -84,7 +84,7 @@ class BaseUIElem extends Entity {
 
     SetStyle(css) {
         this.style = css;
-        this.SetModel([this.text, this.style]);
+        this.SetModel([this.text != undefined ? this.text : "", this.style]);
     }
 
     RegisterHUDElem() {
@@ -192,6 +192,7 @@ class GameCheckbox extends GameButton {
 
         this.OverrideCheckboxAction(action);
 
+        this.checked = checked;
         this.RedrawCheckbox();
 
         this.docRef.addEventListener("click", async () => {

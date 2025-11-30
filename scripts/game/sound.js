@@ -37,20 +37,19 @@ function PlaySound(soundInfo) {
 
     var audio = new Audio(PickRandomFromArray(soundInfo.path));
 
-    if (!soundInfo.loop) {
-        audio.addEventListener("ended", function () {
-            audio = null;
-        });
-    }
+    audio.addEventListener("ended", function () {
+        audio = null;
+    });
 
-    audio.play();
     audio.volume = soundInfo.vol;
     audio.loop = soundInfo.loop;
+    audio.play();
 
     return audio;
 }
 
 function StopSound(audio) {
+    audio.loop = false;
     audio.pause();
     audio.ended = true;
 }

@@ -30,6 +30,7 @@ class Entity {
     midAir = false;
 
     onDelete;
+    onCollide;
 
     constructor(id, startPos, ppr, img) {
 
@@ -51,6 +52,7 @@ class Entity {
         this.Teleport(startPos);
 
         this.onDelete = () => { };
+        this.onCollide = () => { };
     }
 
     SpawnEntity(id) {
@@ -135,7 +137,7 @@ class Entity {
             this.docRef.style.backgroundImage = `url(${this.mdl})`
             this.docRef.style.backgroundColor = `transparent`
         }
-        else if (Array.isArray(mdlstr)) {
+        else if (Array.isArray(this.mdl)) {
 
             let dat = this.mdl[1];
             this.docRef.innerText = `${this.mdl[0]}`
@@ -176,8 +178,15 @@ class Entity {
             if ("position" in dat)
                 this.docRef.style.position = dat["position"];
 
-            if ("BGColor" in dat)
-                this.docRef.style.backgroundColor = dat["BGColor"];
+            if ("BGColor" in dat) {
+
+                if (dat["BGColor"].includes('(')) {
+                    this.docRef.style.backgroundImage = dat["BGColor"];
+                    this.docRef.style.backgroundColor = "transparent";
+                } else {
+                    this.docRef.style.backgroundColor = dat["BGColor"];
+                }
+            }
             else
                 this.docRef.style.backgroundColor = "transparent";
 
@@ -229,6 +238,13 @@ class Entity {
 
             if ("border" in dat) {
 
+                if ("borderRadius" in dat["border"]) {
+                    if (typeof dat["border"]["borderRadius"] == "string")
+                        this.docRef.style.borderRadius = dat["border"]["borderRadius"];
+                    else
+                        this.docRef.style.borderRadius = dat["border"]["borderRadius"] + UOP;
+                }
+
                 if (typeof dat["border"]["borderImg"] === 'string') {
 
                     if (dat["border"]["borderImg"].includes('/'))
@@ -237,20 +253,13 @@ class Entity {
                         this.docRef.style.borderColor = dat["border"]["borderImg"];
 
                 } else {
-                    if (devMode)
+                    if (devMode && !"borderRadius" in dat["border"])
                         console.warn("Border for object " + this.docRef.id + " was not properly setup. Ignoring");
                     return;
                 }
 
                 this.docRef.style.borderWidth = dat["border"]["borderSize"] + UOP;
                 this.docRef.style.borderStyle = dat["border"]["borderStyle"];
-
-                if ("borderRadius" in dat["border"]) {
-                    if (typeof dat["border"]["borderRadius"] == "string")
-                        this.docRef.style.borderRadius = dat["border"]["borderRadius"];
-                    else
-                        this.docRef.style.borderRadius = dat["border"]["borderRadius"] + UOP;
-                }
             }
 
         } else {

@@ -17,12 +17,12 @@ async function UpdateHUD() {
     if (hudElem_health.text != player.health)
         hudElem_health.SetText(player.health);
 
-    if (hudElem_ammo.text == "" && player.weapons.curAmmoCount == Infinity)
+    if (hudElem_ammo.text == "" && (player.weapons.curAmmoCount == Infinity || player.weapons.curAmmoCount == 0))
         return;
 
-    if (player.weapons.curAmmoCount + "/" + player.weapons.curAmmoCountRes != hudElem_ammo.text || player.weapons.curAmmoCount == Infinity) {
+    if (player.weapons.curAmmoCount + "/" + player.weapons.curAmmoCountRes != hudElem_ammo.text || player.weapons.curAmmoCount == Infinity || player.weapons.curAmmoCount == 0) {
 
-        if (player.weapons.curAmmoCount != Infinity)
+        if (player.weapons.curAmmoCount != Infinity && player.weapons.curAmmoCount != 0)
             hudElem_ammo.SetText(player.weapons.curAmmoCount + "/" + player.weapons.curAmmoCountRes)
         else
             hudElem_ammo.SetText("")
