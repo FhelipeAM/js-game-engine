@@ -67,14 +67,17 @@ async function main() {
 
     SetupPlayer();
 
+    // CreateHouses();
+
     LootBoxSpawner();
 }
 
 function SetupPlayer() {
 
     player.ignoreGravity = true;
-    player.movespeed = 2
+    player.movespeed = 2;
     player.GiveWeapon(GetWeaponByName("emptyhands"));
+    player.Teleport([100, 100]);
 
     player.onDeath = () => {
         GameOver();
@@ -83,7 +86,7 @@ function SetupPlayer() {
     let visRadius = new Entity("PlayerVisRadius", player.pos, [(playerViewRadius * 2 - player.CenterOfMass()[0]), (playerViewRadius * 2 - player.CenterOfMass()[1])], ["", {}])
 
     visRadius.SetModel(["", {
-        BGColor: "radial-gradient(circle, rgba(255, 255, 255, 0.35) 20%,rgba(0, 0, 0, 0) 70%)",
+        BGColor: "radial-gradient(circle, rgba(255, 255, 255, 0.35) 10%,rgba(0, 0, 0, 0) 70%)",
         index: 1,
         border: {
             borderRadius: "50%"
@@ -93,8 +96,6 @@ function SetupPlayer() {
     visRadius.ignoreGravity = true;
     visRadius.solid = false;
     visRadius.linkTo(player, [(visRadius.CenterOfMass()[0] * -1) + player.CenterOfMass()[0], (visRadius.CenterOfMass()[1] * -1) + player.CenterOfMass()[0]]);
-
-    player.Teleport([100, 100]);
 
     RemoveInput("jump");
 
@@ -294,7 +295,6 @@ async function HideLB(box) {
 
         await ms(tickrate);
     }
-
 }
 
 async function GameOver() {

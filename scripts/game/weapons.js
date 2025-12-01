@@ -2,7 +2,6 @@ var weaponTemplate = new Map();
 var weapons = [];
 var friendlyFire = false;
 
-
 function _RegisterWeapons() {
     new Weapon("DEFAULTMELEE", "melee", 12, 150, Infinity, 0, 10, 1, 10, [{
         name: "attack",
@@ -93,7 +92,7 @@ class Weapon {
 
         let sound = this.GetWepSoundInfo("attack");
 
-        new Bullet("bullet" + entCount, sset.CenterOfMass(), this.calculateTargetPoint(sset.CenterOfMass(), sset.target.CenterOfMass(), this.range), this.damage, sset.team, this.bulletSpeed, this.range, sound)
+        new Bullet("bullet" + entCount, sset.CenterOfMassPos(), this.calculateTargetPoint(sset.CenterOfMassPos(), sset.target.CenterOfMassPos(), this.range), this.damage, sset.team, this.bulletSpeed, this.range, sound)
     }
 
     calculateTargetPoint(startPos, targetPos, range) {

@@ -321,16 +321,20 @@ class Entity {
         return "entity";
     }
 
-    CenterOfMass() {
+    CenterOfMassPos() {
         return [this.pos[0] + (this.coll[0] / 2), this.pos[1] + (this.coll[1] / 2)];
     }
 
-    IsToTheRight(ent2) {
-        return this.CenterOfMass()[0] > ent2.CenterOfMass()[0];
+    CenterOfMass() {
+        return [this.coll[0] / 2, this.coll[1] / 2];
     }
 
+    IsToTheRight(ent2) {
+        return this.CenterOfMassPos()[0] > ent2.CenterOfMassPos()[0];
+    } 
+    
     IsAbove(ent2) {
-        return this.CenterOfMass()[1] < ent2.CenterOfMass()[1];
+        return this.CenterOfMassPos()[1] < ent2.CenterOfMassPos()[1];
     }
 
     async Collide() {

@@ -56,7 +56,7 @@ async function __sysMain() {
 }
 
 async function _gravityMain(ent) {
-    if (ent.ignoreGravity || ent.iIgnoreGravity) return;
+    if (ent.ignoreGravity || ent.iIgnoreGravity || ent.linkedTo != null) return;
 
     if (ent.pos[1] + ent.coll[1] < GameSafeSpace.bottom && ent.shouldFall) {
 
@@ -78,13 +78,13 @@ async function _gravityMain(ent) {
 
 async function _collMain(ent) {
 
-    if ((ent.entType() == "sentient" && ent.dead) || ent.docRef.parentNode !== GameArea)
+    if ((ent.entType() == "sentient" && ent.dead) || ent.docRef.parentNode !== GameArea || ent.linkedTo != null)
         return;
 
     for (let i = 0; i < entities.length; i++) {
         var ent2 = entities[i];
 
-        if (ent === ent2 || (ent2.entType() == "sentient" && ent2.dead) || ent2.docRef.parentNode !== GameArea)
+        if (ent === ent2 || (ent2.entType() == "sentient" && ent2.dead) || ent2.docRef.parentNode !== GameArea || ent2.linkedTo != null)
             continue;
 
         let entLeft = ent.pos[0];
@@ -107,29 +107,80 @@ async function _collMain(ent) {
                 let overlapX = Math.min(entRight, ent2Right) - Math.max(entLeft, ent2Left);
                 let overlapY = Math.min(entBottom, ent2Bottom) - Math.max(entTop, ent2Top);
 
+                if (overlapX <= 0 || overlapY <= 0) return;
+
                 if (overlapX < overlapY) {
-                    // to the left side
-                    if (!ent.IsToTheRight(ent2) && ent.weight < ent2.weight && ent.pos[0] > GameSafeSpace.left) {
-                        ent.pos[0] = ent2.CenterOfMass()[0] - (ent2.coll[0] + (ent.coll[0] / 2.1));
-                        // to the right side
-                    } else if (ent.IsToTheRight(ent2) && ent.weight <= ent2.weight && ent.pos[0] + ent.coll[0] < GameSafeSpace.right) {
-                        ent.pos[0] = ent2.CenterOfMass()[0] + (ent2.coll[0] / 2);
-                    }
-                }
-                else {
-                    if (ent.IsAbove(ent2) && ent.pos[1] > GameSafeSpace.top) {
-                        ent.pos[1] = ent2.pos[1] - ent2.coll[1];
-                        ent.shouldFall = false;
+
+                    const separation = (overlapX / 2) + 3;
+
+                    if (!ent.IsToTheRight(ent2)) {
+
+                        if (ent.weight < ent2.weight) {
+                            ent.pos[0] = ent2.pos[0] - (ent.coll[0]);
+                        }
+                        else if (ent.weight > ent2.weight) {
+                            ent2.pos[0] = ent.pos[0] + (ent.coll[0]);
+                        }
+                        else {
+                            ent.pos[0] -= separation;
+                            ent2.pos[0] += separation;
+                        }
 
                     } else {
-                        ent.shouldFall = true;
+
+                        if (ent.weight < ent2.weight) {
+                            ent.pos[0] = ent2.pos[0] + (ent.coll[0]);
+                        }
+                        else if (ent.weight > ent2.weight) {
+                            ent2.pos[0] = ent.pos[0] - (ent.coll[0]);
+                        }
+                        else {
+                            ent.pos[0] += separation;
+                            ent2.pos[0] -= separation;
+                        }
+                    }
+
+                }
+                else {
+
+                    const separation = overlapY / 2 + 0.1;
+
+                    if (ent.IsAbove(ent2)) {
+
+                        if (ent.weight < ent2.weight) {
+                            ent.pos[1] = ent2.pos[1] - (ent.coll[1]);
+                        }
+                        else if (ent.weight > ent2.weight) {
+                            ent2.pos[1] = ent.pos[1] + (ent.coll[1]);
+                        }
+                        else {
+                            ent.pos[1] -= separation;
+                            ent2.pos[1] += separation;
+                        }
+
+                        ent.shouldFall = false;
+
+                    }
+                    else if (ent2.IsAbove(ent)) {
+
+                        if (ent2.weight < ent.weight) {
+                            ent2.pos[1] = ent.pos[1] - (ent.coll[1]);
+                        }
+                        else if (ent2.weight > ent.weight) {
+                            ent.pos[1] = ent2.pos[1] + (ent.coll[1]);
+                        }
+                        else {
+                            ent2.pos[1] -= separation;
+                            ent.pos[1] += separation;
+                        }
+
+                        ent2.shouldFall = false;
                     }
                 }
 
                 //to avoid desync
                 ent.Teleport([ent.pos[0], ent.pos[1]], false);
                 ent.onCollide();
-
                 return;
             }
         } else {

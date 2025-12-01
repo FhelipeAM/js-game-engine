@@ -5,6 +5,7 @@ var disableControls = false;
 var freecam = false;
 
 var lastJumpTime = 0;
+var jumpForce = 120;
 const jumpDelay = 0.1;
 
 var KeyBinds = [];
@@ -55,7 +56,7 @@ function _baseMovement() {
 
         if (!movementTarget.midAir && jmpcheck) {
             lastJumpTime = timePassed;
-            diry = movementTarget.pos[1] - 120;
+            diry = movementTarget.pos[1] - jumpForce;
 
             movementTarget.Teleport([dirx, diry]);
 
@@ -108,8 +109,8 @@ function _CameraScroll() {
     if (freecam)
         return;
 
-    const entX = movementTarget.CenterOfMass()[0];
-    const entY = movementTarget.CenterOfMass()[1];
+    const entX = movementTarget.CenterOfMassPos()[0];
+    const entY = movementTarget.CenterOfMassPos()[1];
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;

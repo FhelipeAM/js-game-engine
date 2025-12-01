@@ -54,12 +54,12 @@ function distance(ent1, ent2) {
     let pos1, pos2, distX, distY;
 
     if (!Array.isArray(ent1))
-        pos1 = ent1.CenterOfMass();
+        pos1 = ent1.CenterOfMassPos();
     else
         pos1 = ent1;
 
     if (!Array.isArray(ent2))
-        pos2 = ent2.CenterOfMass();
+        pos2 = ent2.CenterOfMassPos();
     else
         pos2 = ent2;
 
