@@ -232,7 +232,7 @@ function _UtilityMenu(selectedEnt) {
             true
         );
 
-        var DeleteBtn = undefined; 
+        var DeleteBtn = undefined;
 
         if (selectedEnt != player) {
             DeleteBtn = new GameButton(
@@ -985,8 +985,8 @@ function _VisEntInfo(targetEnt) {
             continue;
         }
 
-        if (key == "weapons" || targetEnt == weaponTemplate.get("DEFAULTMELEE") || 
-        (targetEnt == player && key == "aiEnabled")) {
+        if (key == "weapons" || targetEnt == weaponTemplate.get("DEFAULTMELEE") ||
+            (targetEnt == player && key == "aiEnabled")) {
 
             readOnly = true;
         }

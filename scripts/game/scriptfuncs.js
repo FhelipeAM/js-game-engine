@@ -126,6 +126,10 @@ async function ArrayEmptied(array) {
     }
 }
 
+function ArrayFromClosest(ent, ents) {
+    return ents.slice().sort((a, b) => distance(ent, a) - distance(ent, b));
+}
+
 function PickRandomFromArray(paths) {
     if (!Array.isArray(paths)) {
         return paths;
@@ -149,6 +153,10 @@ function GetMousePos(event) {
     let valY = (event.clientY + window.scrollY);
 
     mousePos = [valX, valY];
+}
+
+function PickRandomPos(coll) {
+    return [Math.floor(Math.random() * GameSafeSpace.right - coll[0]), Math.floor(Math.random() * GameSafeSpace.bottom - coll[1])];
 }
 
 async function _StartSys() {

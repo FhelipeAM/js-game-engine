@@ -18,6 +18,9 @@ _RegisterSounds();
 
 const player = new Sentient("player", [0, 0], [100, 100], "./assets/img/testplayer.jpg", "allies", false);
 
+var LDT = 0;
+let TPS = 60;
+
 async function __sysMain() {
 
     SetPlayableAreaSize(GameArea.style.width, GameArea.style.height);
@@ -27,6 +30,8 @@ async function __sysMain() {
     await _NoLevelLoaded();
 
     _StartSys();
+
+    let TDS = 0;
 
     const tickSystem = setInterval(() => {
 
@@ -38,21 +43,30 @@ async function __sysMain() {
         UpdateHUD();
 
         entities.forEach((ent) => {
-            _collMain(ent);
             _interpolateMain(ent);
             _gravityMain(ent);
+            _collMain(ent);
         });
 
         sentients.forEach((sent) => {
             sent._think();
         });
 
+
+        if (devMode) {
+
+            TDS++;
+            const now = Date.now();
+            if (now - LDT >= 1000) {
+                TPS = TDS;
+                TDS = 0;
+                LDT = now;
+            }
+        }
+
         timePassed++;
     }, tickrate);
 
-    return () => {
-        clearInterval(tickSystem);
-    };
 }
 
 async function _gravityMain(ent) {
@@ -78,14 +92,15 @@ async function _gravityMain(ent) {
 
 async function _collMain(ent) {
 
-    if ((ent.entType() == "sentient" && ent.dead) || ent.docRef.parentNode !== GameArea || ent.linkedTo != null)
+    if ((ent.entType() == "sentient" && ent.dead) || ent.docRef.parentNode !== GameArea || ent.linkedTo != null || ent.entType() == "uielem")
         return;
 
-    for (let i = 0; i < entities.length; i++) {
-        var ent2 = entities[i];
+    let shouldFall = true;
 
-        if (ent === ent2 || (ent2.entType() == "sentient" && ent2.dead) || ent2.docRef.parentNode !== GameArea || ent2.linkedTo != null)
-            continue;
+    ArrayFromClosest(ent, entities).forEach(ent2 => {
+
+        if (ent === ent2 || (ent2.entType() == "sentient" && ent2.dead) || ent2.docRef.parentNode !== GameArea || ent2.linkedTo != null || ent2.entType() == "uielem")
+            return;
 
         let entLeft = ent.pos[0];
         let entRight = ent.pos[0] + ent.coll[0];
@@ -110,16 +125,15 @@ async function _collMain(ent) {
                 if (overlapX <= 0 || overlapY <= 0) return;
 
                 if (overlapX < overlapY) {
-
-                    const separation = (overlapX / 2) + 3;
+                    const separation = (overlapX / 2);
 
                     if (!ent.IsToTheRight(ent2)) {
 
                         if (ent.weight < ent2.weight) {
-                            ent.pos[0] = ent2.pos[0] - (ent.coll[0]);
+                            ent.pos[0] -= separation;
                         }
                         else if (ent.weight > ent2.weight) {
-                            ent2.pos[0] = ent.pos[0] + (ent.coll[0]);
+                            ent2.pos[0] += separation;
                         }
                         else {
                             ent.pos[0] -= separation;
@@ -129,10 +143,10 @@ async function _collMain(ent) {
                     } else {
 
                         if (ent.weight < ent2.weight) {
-                            ent.pos[0] = ent2.pos[0] + (ent.coll[0]);
+                            ent.pos[0] += separation;
                         }
                         else if (ent.weight > ent2.weight) {
-                            ent2.pos[0] = ent.pos[0] - (ent.coll[0]);
+                            ent2.pos[0] -= separation;
                         }
                         else {
                             ent.pos[0] += separation;
@@ -143,51 +157,52 @@ async function _collMain(ent) {
                 }
                 else {
 
-                    const separation = overlapY / 2 + 0.1;
+                    const separation = overlapY;
 
                     if (ent.IsAbove(ent2)) {
 
                         if (ent.weight < ent2.weight) {
-                            ent.pos[1] = ent2.pos[1] - (ent.coll[1]);
+                            ent.pos[1] -= separation;
                         }
                         else if (ent.weight > ent2.weight) {
-                            ent2.pos[1] = ent.pos[1] + (ent.coll[1]);
-                        }
-                        else {
-                            ent.pos[1] -= separation;
                             ent2.pos[1] += separation;
                         }
+                        else {
+                            ent.pos[1] -= separation / 2;
+                            ent2.pos[1] += separation / 2;
+                        }
 
-                        ent.shouldFall = false;
-
+                        shouldFall = false;
                     }
                     else if (ent2.IsAbove(ent)) {
 
                         if (ent2.weight < ent.weight) {
-                            ent2.pos[1] = ent.pos[1] - (ent.coll[1]);
+                            ent2.pos[1] -= separation;
                         }
                         else if (ent2.weight > ent.weight) {
-                            ent.pos[1] = ent2.pos[1] + (ent.coll[1]);
-                        }
-                        else {
-                            ent2.pos[1] -= separation;
                             ent.pos[1] += separation;
                         }
+                        else {
+                            ent.pos[1] += separation / 2;
+                            ent2.pos[1] -= separation / 2;
+                        }
 
-                        ent2.shouldFall = false;
+                        shouldFall = false;
                     }
                 }
 
                 //to avoid desync
                 ent.Teleport([ent.pos[0], ent.pos[1]], false);
+                ent2.Teleport([ent2.pos[0], ent2.pos[1]], false);
+
                 ent.onCollide();
-                return;
             }
-        } else {
-            ent.collTarget = undefined;
-            ent.shouldFall = true;
+        } else if (ent.collTarget == undefined || !ent.IsAbove(ent.collTarget)) {
+            shouldFall = true;
         }
-    }
+    })
+
+    ent.shouldFall = shouldFall;
 }
 
 async function _interpolateMain(ent) {

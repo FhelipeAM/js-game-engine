@@ -231,7 +231,7 @@ class Entity {
                 this.docRef.style.filter = dat["filter"];
 
             if ("mixBlend" in dat)
-                this.docRef.style.backgroundBlendMode = dat["mixBlend"];
+                this.docRef.style.mixBlendMode = dat["mixBlend"];
 
             if ("overflow" in dat)
                 this.docRef.style.overflow = dat["overflow"];
@@ -331,8 +331,8 @@ class Entity {
 
     IsToTheRight(ent2) {
         return this.CenterOfMassPos()[0] > ent2.CenterOfMassPos()[0];
-    } 
-    
+    }
+
     IsAbove(ent2) {
         return this.CenterOfMassPos()[1] < ent2.CenterOfMassPos()[1];
     }

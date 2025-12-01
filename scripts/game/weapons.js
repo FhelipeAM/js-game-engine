@@ -235,9 +235,14 @@ class Bullet extends Entity {
         while (true) {
             if (this._CanHitTarget()) {
                 PlaySound(GetSoundInfo("hit"));
-                this.collTarget.Damage(this.damage)
+                this.collTarget.Damage(this.damage);
                 this.Delete();
                 return;
+            } else if (this.collTarget != null) {
+                if (this.collTarget.entType() == "entity") {
+                    this.Delete();
+                    return;
+                }
             }
             await ms(tickrate);
         }

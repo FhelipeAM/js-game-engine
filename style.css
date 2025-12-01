@@ -9,9 +9,7 @@
 
 body {
     height: 100vh;
-    
-    background-image: url(assets/img/testent2.png);
-    background-size: fill;
+    background-color: black;
 }
 
 #HUD {
@@ -29,12 +27,12 @@ body {
 
 .entity {
     position: absolute;
-    
+
     width: 100px;
     height: 100px;
     background-color: blue;
     background-size: cover;
-    
+
     z-index: 1;
 }
 
@@ -50,8 +48,6 @@ body {
     width: 10000px;
 
     background-color: white;
-
-    border: 2px solid red;
 }
 
 .dead {
@@ -62,7 +58,7 @@ body {
     transform: rotate(90deg) !important;
 
     filter: grayscale(1) !important;
-    
+
     /* mix-blend-mode: multiply; */
 
     z-index: 0 !important;
@@ -79,6 +75,7 @@ body {
 .ltr {
     transform: scaleX(1);
 }
+
 .rtl {
     transform: scaleX(-1);
 }

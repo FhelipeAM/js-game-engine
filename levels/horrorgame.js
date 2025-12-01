@@ -14,9 +14,7 @@ async function main() {
     SetPlayableAreaSize(7000, 7000);
     SetGameBackground("assets/img/testbg.jpg");
 
-    let darkOverlay = new GameContainer([0, 0], [GameSafeSpace.right, GameSafeSpace.bottom], {
-        BGColor: "#000000ee"
-    }, false, false);
+    setHUDTextColor("#fff");
 
     RegisterSound(
         "game_start_song",
@@ -56,7 +54,7 @@ async function main() {
         }
     ])
 
-    new Weapon("instaKiller", "single", 9999, 200, Infinity, 0, 10, 1, 20, [
+    new Weapon("instaKiller", "single", 9999, 200, Infinity, 0, 10, 1, 10, [
         {
             name: "attack",
             path: ["assets/snd/weapon/Slash1.ogg", "assets/snd/weapon/Slash2.ogg"],
@@ -67,35 +65,40 @@ async function main() {
 
     SetupPlayer();
 
-    // CreateHouses();
+    CreateHouses();
 
     LootBoxSpawner();
 }
 
-function SetupPlayer() {
+async function SetupPlayer() {
 
     player.ignoreGravity = true;
     player.movespeed = 2;
     player.GiveWeapon(GetWeaponByName("emptyhands"));
-    player.Teleport([100, 100]);
 
     player.onDeath = () => {
         GameOver();
     }
 
-    let visRadius = new Entity("PlayerVisRadius", player.pos, [(playerViewRadius * 2 - player.CenterOfMass()[0]), (playerViewRadius * 2 - player.CenterOfMass()[1])], ["", {}])
+    let darkOverlay = new GameContainer([0, 0], [GameSafeSpace.right, GameSafeSpace.bottom], {
+        mixBlend: "multiply",
+        BGColor: "#000000ff"
+    }, false, false);
 
+    player.Teleport(await RandomTillValid(player.coll), true);
+
+    let visRadius = new Entity("PlayerVisRadius", player.pos, [(playerViewRadius * 2 - player.CenterOfMass()[0]), (playerViewRadius * 2 - player.CenterOfMass()[1])], ["", {}])
     visRadius.SetModel(["", {
-        BGColor: "radial-gradient(circle, rgba(255, 255, 255, 0.35) 10%,rgba(0, 0, 0, 0) 70%)",
+        BGColor: `radial-gradient(circle, white 10%, transparent 70%)`,
         index: 1,
         border: {
             borderRadius: "50%"
         }
     }])
-
     visRadius.ignoreGravity = true;
     visRadius.solid = false;
     visRadius.linkTo(player, [(visRadius.CenterOfMass()[0] * -1) + player.CenterOfMass()[0], (visRadius.CenterOfMass()[1] * -1) + player.CenterOfMass()[0]]);
+    darkOverlay.AttachToMe(visRadius);
 
     RemoveInput("jump");
 
@@ -130,18 +133,24 @@ function SetupPlayer() {
 
 async function LootBoxSpawner() {
 
-    let threat = CreateEnemy();
+    let threat = await CreateEnemy();
 
     HideEnemy(threat);
 
     while (player.health > 0) {
 
-        let box = CreateLootBox();
+        let box = await CreateLootBox();
         HideLB(box);
 
         await PlayerCollision(box);
 
+        PlaySound(GetSoundInfo("player_box_break"));
+        points++;
+        box.Delete();
+
         threat.movespeed = 1 + (points / 10);
+
+        cl(threat.movespeed)
     }
 }
 
@@ -157,34 +166,64 @@ async function PlayerCollision(ent) {
         return;
 }
 
-function CreateEnemy() {
+async function CreateEnemy() {
 
-    let stubEnt = new Sentient("Sentient" + entCount, PickRandomPos(), [100, 100], "./assets/img/testent.jpg", "axis", true);
+    let stubEnt = new Sentient("Sentient" + entCount, [0, 0], [100, 100], "./assets/img/testent.jpg", "axis", true);
     stubEnt.GiveWeapon(GetWeaponByName("instaKiller"));
     stubEnt.SetModel("assets/img/testent3.png");
     stubEnt.ignoreGravity = true;
+    stubEnt.Teleport(await RandomTillValid(stubEnt.coll), true);
 
     return stubEnt;
 }
 
-function CreateLootBox() {
-    var stubEnt = new Entity("lootbox" + entCount, PickRandomPos(), [100, 100], "./assets/img/testplayer.jpg");
+async function CreateLootBox() {
+    var stubEnt = new Entity("lootbox" + entCount, [0, 0], [100, 100], "./assets/img/testplayer.jpg");
     stubEnt.ignoreGravity = true;
+    stubEnt.solid = false;
 
-    stubEnt.onCollide = () => {
+    stubEnt.Teleport(await RandomTillValid(stubEnt.coll), true);
 
-        if (stubEnt.collTarget == player) {
-            PlaySound(GetSoundInfo("player_box_break"));
-            points++;
+    return stubEnt;
+}
+
+function CreateHouses() {
+
+    for (let i = 0; i < Math.max((Math.random() * 14), 5); i++) {
+        let entColl = [Math.max((Math.random() * 3000), 1000), Math.max((Math.random() * 3000), 1000)];
+
+        let stubEnt = new Entity("HOUSE" + entCount, PickRandomPos(entColl), entColl, ["", { BGColor: "#000", index: 2 }]);
+        stubEnt.ignoreGravity = true;
+        stubEnt.weight = 10000;
+        stubEnt.solid = true;
+    }
+}
+
+async function RandomTillValid(collSize) {
+
+    let pos = [0, 0];
+    let valid = false;
+    var stubEnt = new Entity("colltest" + entCount, pos, collSize, "transparent");
+    stubEnt.ignoreGravity = true;
+    stubEnt.weight = 10000;
+    stubEnt.solid = false;
+
+    while (!valid) {
+
+        pos = PickRandomPos(collSize);
+        stubEnt.Teleport(pos, true);
+
+        await ms(tickrate + 5)
+
+        if (stubEnt.collTarget == undefined) {
             stubEnt.Delete();
+            valid = true;
         }
+
+        stubEnt.collTarget = undefined
     }
 
-    return stubEnt;
-}
-
-function PickRandomPos() {
-    return [Math.floor(Math.random() * GameSafeSpace.right), Math.floor(Math.random() * GameSafeSpace.bottom)];
+    return pos;
 }
 
 async function HideEnemy(enemy) {
@@ -219,29 +258,29 @@ async function HideEnemy(enemy) {
                 PlaySound(GetSoundInfo("horror_sound"))
 
                 chaseMusic = PlaySound(GetSoundInfo("chase_music"))
-                chaseMusic.playbackRate = 1 + (points / 30); 
+                chaseMusic.playbackRate = 1 + (points / 30);
 
                 beingChased = true;
             }
 
-            let lightLevel = 1 - (distance(player, enemy)/playerViewRadius)
+            let lightLevel = 1 - (distance(player, enemy) / playerViewRadius)
 
             chaseStartTime = timePassed;
 
             enemy.Show();
 
             enemy.docRef.style.opacity = lightLevel;
-            
+
         } else {
 
             if (beingChased && timePassed > chaseStartTime + chaseFalloffTime) {
 
-                enemy.Teleport(PickRandomPos(), false);
+                enemy.Teleport(await RandomTillValid(enemy.coll), false);
 
                 beingChased = false;
 
                 if (chaseMusic != undefined) {
-                    await SndFadeOut(chaseMusic, 5);
+                    SndFadeOut(chaseMusic, 3);
                 }
 
                 GamePlayMusic = PlaySound(GetSoundInfo("game_start_song"));
@@ -284,9 +323,8 @@ async function HideLB(box) {
 
             box.Show();
 
-            let lightLevel = 1 - (distance(player, box)/playerViewRadius)
+            let lightLevel = 1 - (distance(player, box) / playerViewRadius)
 
-            cl (lightLevel)
             box.docRef.style.opacity = lightLevel;
         } else {
 

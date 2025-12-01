@@ -125,7 +125,7 @@ async function main() {
 
 function SetupPlayer() {
 
-    player.Teleport(PickRandomPos());
+    player.Teleport(PickRandomPos(player.coll));
     player.ignoreGravity = true;
     player.GiveWeapon(GetWeaponByName("playerRifle"));
 
@@ -212,7 +212,7 @@ async function waveSpawner() {
 
             PlaySound(GetSoundInfo("jugg_spawn"));
 
-            let juggernaut = new Sentient("Sentient" + entCount, PickRandomPos(), [100, 130], "./assets/img/testent.jpg", "axis", true);
+            let juggernaut = new Sentient("Sentient" + entCount, PickRandomPos([130, 130]), [130, 130], "./assets/img/testent.jpg", "axis", true);
             juggernaut.ignoreGravity = true;
 
             juggernaut.health = 1000 * wave;
@@ -268,7 +268,7 @@ async function LootBoxSpawner() {
 function CreateEnemy() {
     let limit = 4;
 
-    let stubEnt = new Sentient("Sentient" + entCount, PickRandomPos(), [100, 130], "./assets/img/testent.jpg", "axis", true);
+    let stubEnt = new Sentient("Sentient" + entCount, PickRandomPos([100, 100]), [100, 100], "./assets/img/testent.jpg", "axis", true);
     stubEnt.ignoreGravity = true;
 
     let classPick = Math.floor(Math.random() * 10);
@@ -307,8 +307,9 @@ function CreateEnemy() {
 }
 
 async function CreateLootBox(playsound) {
-    var stubEnt = new Entity("lootbox" + entCount, PickRandomPos(), [100, 100], "./assets/img/testplayer.jpg");
+    var stubEnt = new Entity("lootbox" + entCount, PickRandomPos([100, 100]), [100, 100], "./assets/img/testplayer.jpg");
     stubEnt.ignoreGravity = true;
+    stubEnt.solid = false;
 
     if (playsound)
         PlaySound(GetSoundInfo("box_spawned"));
@@ -328,10 +329,6 @@ async function CreateLootBox(playsound) {
 
 
     stubEnt.Delete();
-}
-
-function PickRandomPos() {
-    return [Math.floor(Math.random() * GameSafeSpace.right), Math.floor(Math.random() * GameSafeSpace.bottom)];
 }
 
 async function GameOver() {
