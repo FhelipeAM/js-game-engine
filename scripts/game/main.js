@@ -356,8 +356,6 @@ async function _NoLevelLoaded() {
     }
 
     if (loadedLevel != "editor") {
-        if (loadedLevel != "hardcoded")
-            _LoadLevel(loadedLevel);
         gamePaused = false;
     }
 
@@ -380,6 +378,8 @@ function _levelLoader() {
             const scriptContent = e.target.result;
 
             try {
+
+                _LoadLevel(_GetLevelData(scriptContent));
                 eval(scriptContent);
             } catch (error) {
                 console.error('Error:', error);
@@ -394,12 +394,29 @@ function _levelLoader() {
     });
 }
 
-function _LoadLevel(levelData) {
+function _GetLevelData(rawScript) {
 
-    if (!loadedLevel || loadedLevel === "" || loadedLevel === "hardcoded") {
-        alert("Invalid level file supplied! Make sure the file has the loadedLevel variable set to anything other than ['', 'hardcoded']");
+    const levelMatch = rawScript.match(/loadedLevel\s*=\s*(\[.*?\]|\{.*?\}|"hardcoded");/s);
+
+    if (!levelMatch) {
         return;
     }
+
+    return JSON.parse(levelMatch[1]);
+}
+
+function _LoadLevel(levelData) {
+
+
+    if (!levelData || levelData === "" || levelData == "hardcoded") {
+        if (levelData != "hardcoded")
+            alert("Invalid level file!");
+        if (levelData != "hardcoded" && devMode)
+            alert("Make sure the file has loadedLevel variable set to 'hardcoded' if there's no level or add in the 'loadedLevel = [entity defitions];' to your script.");
+        return;
+    }
+
+    loadedLevel = levelData;
 
     weaponTemplate.forEach((wep) => {
 
@@ -476,8 +493,8 @@ function _LoadLevel(levelData) {
 
 function SetPlayableAreaSize(xy) {
 
-    GameArea.style.height = xy[0] + "px";
-    GameArea.style.width = xy[1] + "px";
+    GameArea.style.width = xy[0] + "px";
+    GameArea.style.height = xy[1] + "px";
 
     GameSafeSpace = GameArea.getBoundingClientRect();
 }

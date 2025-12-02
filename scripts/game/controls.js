@@ -29,12 +29,12 @@ function _startMovement() {
 
     document.addEventListener("keypress", (key) => {
         key.preventDefault();
-        if (!pressedKeys.includes(key.key))
-            pressedKeys.push(key.key);
+        if (!pressedKeys.includes(key.key.toLowerCase()))
+            pressedKeys.push(key.key.toLowerCase());
     });
 
     document.addEventListener("keyup", (key) => {
-        pressedKeys.splice(pressedKeys.indexOf(key.key), 1);
+        pressedKeys.splice(pressedKeys.indexOf(key.key.toLowerCase()), 1);
     });
 }
 

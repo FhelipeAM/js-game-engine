@@ -1044,7 +1044,7 @@ function _VisEntInfo(targetEnt) {
             "Edit",
             () => {
                 if (targetEnt.entType() != "weapon")
-                    _EditEntParam(targetEnt, targetEnt.docRef.id, targetEnt.docRef.id, typeof targetEnt.docRef.id);
+                    _EditEntParam(targetEnt, "docRef ID", targetEnt.docRef.id, typeof targetEnt.docRef.id);
                 else
                     _EditEntParam(targetEnt, "name", targetEnt.name, typeof targetEnt.name);
             },
@@ -1082,7 +1082,7 @@ function _VisEntInfo(targetEnt) {
             key == "linkedToOffset" || key == "shouldFall" || key == "falling" ||
             key == "midAir" || key == "iIgnoreGravity" || key == "interpolating" ||
             key == "dead" || key == "target" || key == "interpos" || key == "reloading" ||
-            key == "curAmmoCount" || key == "curAmmoCountRes" || key == "LFT" ||
+            key == "curAmmoCount" || key == "curAmmoCountRes" || key == "LFT" || key == "coll" ||
             typeof targetEnt[key] == "function") {
             continue;
         }
@@ -1366,10 +1366,15 @@ function _EditEntParam(targetEnt, key, curVal, valType) {
         ["50%", "max-content"],
         "Apply",
         () => {
-            if (typeof valType == "number")
-                targetEnt[key] = Number(inputBox.GetValue());
-            else
-                targetEnt[key] = inputBox.GetValue();
+
+            if (key != "docRef ID") {
+                if (valType == "number")
+                    targetEnt[key] = Number(inputBox.GetValue());
+                else
+                    targetEnt[key] = inputBox.GetValue();
+            } else {
+                targetEnt.docRef.id = inputBox.GetValue();
+            }
 
             RootContainer.Delete();
             CloseMenu("EntInfoBox");
@@ -1659,7 +1664,7 @@ function _SaveLevel() {
         levelDat.push(stubInfo);
     })
 
-    cl(levelDat);
+    let fLevelDat = "loadedLevel = " + JSON.stringify(levelDat) + ";";
 
     const RootContainer = new GameContainer(
         [0, 0],
@@ -1702,7 +1707,7 @@ function _SaveLevel() {
         false
     );
 
-    const LevelDatImp = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], JSON.stringify(levelDat), "text",
+    const LevelDatImp = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], fLevelDat, "text",
         () => { },
         {
             display: "flex",
@@ -1724,7 +1729,7 @@ function _SaveLevel() {
     );
     LevelDatImp.docRef.readOnly = true;
 
-    navigator.clipboard.writeText(JSON.stringify(levelDat) + ";");
+    navigator.clipboard.writeText(fLevelDat);
 
     const QuitEditor = new GameButton(
         [0, 0],
@@ -1761,7 +1766,6 @@ function _SaveLevel() {
 function _LoadLevelFile() {
 
     CloseMenu("EntSideBar");
-    let levelData = "";
 
     LoadFile('.js,.javascript,text/javascript', (event) => {
         const file = event.target.files[0];
@@ -1773,16 +1777,7 @@ function _LoadLevelFile() {
             const scriptContent = e.target.result;
 
             try {
-                const levelMatch = scriptContent.match(/loadedLevel\s*=\s*(\[.*?\]|\{.*?\});/s);
-
-                if (!levelMatch) {
-                    alert("Failed loading the file! make sure 'loadedLevel = [entity defitions];'");
-                    return;
-                }
-
-                const newLoadedLevel = JSON.parse(levelMatch[1]);
-
-                _LoadLevel(newLoadedLevel);
+                _LoadLevel(_GetLevelData(scriptContent));
 
             } catch (error) {
                 console.error('Error executing level script:', error);
@@ -1797,7 +1792,6 @@ function _LoadLevelFile() {
         reader.readAsText(file);
     });
 }
-
 
 function _LSLisStateVal(key) {
     return key == "collTarget" || key == "end" || key == "shouldFall" || key == "falling" ||

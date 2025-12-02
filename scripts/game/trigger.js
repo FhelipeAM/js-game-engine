@@ -66,7 +66,7 @@ class Trigger extends Entity {
             await this._DetectCollsion();
         }
 
-        this.action();
+        this.action(this.collTarget);
 
         if (this.type[0] == "multiple") {
 
