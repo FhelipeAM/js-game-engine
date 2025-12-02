@@ -1,3 +1,5 @@
+loadedLevel = "hardcoded";
+
 const cubeWeight = 2;
 const pWeight = 1;
 
@@ -5,7 +7,7 @@ main();
 
 function main() {
 
-    SetPlayableAreaSize(10000, 2000);
+    SetPlayableAreaSize([10000, 2000]);
 
     RemoveInput("jump");
 

@@ -1,4 +1,7 @@
-var hudElem_waveCounter = new GameText([-720, -420], ["max-content", "max-content"], "Wave: 0", HUDStyle, true)
+
+loadedLevel = "hardcoded";
+
+var hudElem_waveCounter = new GameText([-720, -420], ["max-content", "max-content"], "Wave: 0", { ...HUDStyle, color: "white" }, true)
 
 main();
 
@@ -9,11 +12,10 @@ async function main() {
 
     displayDamage = true;
 
-    SetPlayableAreaSize(10000, 10000);
+    SetPlayableAreaSize([10000, 10000]);
     SetGameBackground("assets/img/testent2.png");
 
     setHUDTextColor("#fff");
-    hudElem_waveCounter.docRef.style.color = "#fff";
 
     RegisterSound(
         "game_start_song",

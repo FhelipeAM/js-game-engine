@@ -13,6 +13,8 @@ var loadedLevel = "";
 var gamePaused = false;
 var timePassed = 0;
 
+let __editor_mode = false;
+
 _RegisterWeapons();
 _RegisterSounds();
 
@@ -23,7 +25,7 @@ let TPS = 60;
 
 async function __sysMain() {
 
-    SetPlayableAreaSize(GameArea.style.width, GameArea.style.height);
+    SetPlayableAreaSize([GameArea.style.width, GameArea.style.height]);
 
     _initControls(player);
 
@@ -354,6 +356,8 @@ async function _NoLevelLoaded() {
     }
 
     if (loadedLevel != "editor") {
+        if (loadedLevel != "hardcoded")
+            _LoadLevel(loadedLevel);
         gamePaused = false;
     }
 
@@ -377,7 +381,6 @@ function _levelLoader() {
 
             try {
                 eval(scriptContent);
-                loadedLevel = e.target.result;
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -391,10 +394,90 @@ function _levelLoader() {
     });
 }
 
-function SetPlayableAreaSize(x, y) {
+function _LoadLevel(levelData) {
 
-    GameArea.style.height = y + "px";
-    GameArea.style.width = x + "px";
+    if (!loadedLevel || loadedLevel === "" || loadedLevel === "hardcoded") {
+        alert("Invalid level file supplied! Make sure the file has the loadedLevel variable set to anything other than ['', 'hardcoded']");
+        return;
+    }
+
+    weaponTemplate.forEach((wep) => {
+
+        //hardcoded weapon
+        if (wep.name == "DEFAULTMELEE")
+            return;
+
+        weaponTemplate.delete(wep.name);
+    })
+
+    entities.forEach((ent) => {
+
+        if (ent.entType() == "uielem" || ent.docRef.id == "player")
+            return;
+
+        ent.Delete();
+    })
+
+    levelData.forEach((ent) => {
+
+        let entStub = undefined;
+
+        switch (ent.type) {
+            case "sentient":
+                if (ent.keys.docRefID != "player")
+                    entStub = new Sentient(ent.keys.docRefID, ent.keys.pos, ent.keys.coll, ent.keys.img, ent.keys.team, ent.keys.aiEnabled)
+                else
+                    entStub = GetEnt(ent.keys.docRefID)
+                break;
+            case "entity":
+                entStub = new Entity(ent.keys.docRefID, ent.keys.pos, ent.keys.coll, ent.keys.img);
+                break;
+            case "trigger":
+                entStub = new Trigger(ent.keys.pos, ent.keys.coll, ent.keys.type, () => { cl("Replace via script") }, ent.keys.ignoreEntTypes);
+                break;
+            case "weapon":
+                entStub = new Weapon(ent.keys.name, ent.keys.type, ent.keys.damage, ent.keys.damage, ent.keys.ammoCount, ent.keys.ammoCount, ent.keys.fireTime, ent.keys.reloadTime, ent.keys.bulletSpeed, ent.keys.sndSet);
+                break;
+            case "level":
+                SetPlayableAreaSize(ent.keys.size);
+                SetGameBackground(ent.keys.img);
+                return;
+        }
+
+        for (const key in ent.keys) {
+
+            if (_LSLisStateVal(key) || typeof ent.keys[key] == "function")
+                continue;
+
+            if (key == "docRefID") {
+                entStub.docRef.id = ent.keys[key];
+                continue;
+            } else if (key == "weaponsName") {
+                entStub.GiveWeapon(GetWeaponByName(ent.keys[key]))
+                continue;
+            }
+            else if (key == "pos") {
+                entStub.Teleport(ent.keys[key], true);
+            }
+            else if (key == "coll") {
+                entStub.SetSize(ent.keys[key]);
+            }
+            else if (key == "mdl") {
+                // keyStub[key] = CompressImage(ent[key]);
+                // continue;
+            }
+
+            entStub[key] = ent.keys[key];
+        }
+    })
+
+    __editor_onAction = false;
+}
+
+function SetPlayableAreaSize(xy) {
+
+    GameArea.style.height = xy[0] + "px";
+    GameArea.style.width = xy[1] + "px";
 
     GameSafeSpace = GameArea.getBoundingClientRect();
 }

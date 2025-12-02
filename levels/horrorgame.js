@@ -1,3 +1,7 @@
+loadedLevel = "hardcoded";
+
+var hudElem_points = new GameText([-720, -420], ["max-content", "max-content"], "Points: 0", {...HUDStyle, color: "white"}, true)
+
 var wallhack = false;
 const playerViewRadius = 700;
 var points = 0;
@@ -11,10 +15,11 @@ async function main() {
     displayDamage = false;
     hudElem_health.Hide();
 
-    SetPlayableAreaSize(7000, 7000);
+    SetPlayableAreaSize([7000, 7000]);
     SetGameBackground("assets/img/testbg.jpg");
 
     setHUDTextColor("#fff");
+    hudContainer.AttachToMe(hudElem_points);
 
     RegisterSound(
         "game_start_song",
@@ -150,7 +155,7 @@ async function LootBoxSpawner() {
 
         threat.movespeed = 1 + (points / 10);
 
-        cl(threat.movespeed)
+        hudElem_points.SetText("Points: " + points);
     }
 }
 

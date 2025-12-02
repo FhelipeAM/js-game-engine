@@ -1,3 +1,5 @@
+__editor_mode = true;
+
 let __editor_target = undefined;
 let __editor_onAction = false;
 
@@ -9,6 +11,8 @@ function _LevelEditorMain() {
 
     hudElem_health.Delete();
     hudElem_ammo.Delete();
+
+    GetEnt("mousetarget").Delete();
 
     _StartLevelSettings();
 
@@ -43,30 +47,296 @@ function _LevelEditorMain() {
     })
 }
 
-async function _SelectEnt() {
+function _StartLevelSettings() {
 
-    if (isMenuOpen("UtilityMenu")) {
+    __editor_levelSettings = new GameButton(
+        [920, -430],
+        [80, 80],
+        "",
+        () => {
+            _LevelSidebar()
+        },
+        {},
+        true
+    );
+
+    __editor_levelSettings.SetModel("assets/img/editor/settings.png");
+    hudContainer.AttachToMe(__editor_levelSettings);
+}
+
+function _LevelSidebar() {
+
+    if (isMenuOpen("EntSideBar")) {
+        CloseMenu("EntSideBar");
+        __editor_onAction = false;
         return;
     }
 
     __editor_onAction = true;
 
-    let stubEnt = new Entity("mouseCast" + entCount, mousePos, [1, 1], "transparent");
-    stubEnt.ignoreGravity = true;
-    stubEnt.solid = false;
+    const SettingsContainer = new GameContainer(
+        [0, 0],
+        [400, "100vh"],
+        {
+            position: "absolute",
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
+            alignY: "center",
+            BGColor: "#ffffff",
+            index: 45,
+            padding: 15,
+            gap: 10,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid"
+            }
+        },
+        false,
+        true
+    );
+    SettingsContainer.SetID("EntSideBar");
 
-    _collMain(stubEnt); // Big, huge brain move
+    const LevelSettingsLabel = new GameText([0, 0], ["max-content", "max-content"], "Level settings: ", {
+        position: "relative",
+        fontSize: 30
+    }, true);
+    SettingsContainer.AttachToMe(LevelSettingsLabel);
 
-    if (stubEnt.collTarget != undefined) {
-        __editor_target = stubEnt.collTarget;
+    const LevelSizeLabel = new GameText([0, 0], ["max-content", "max-content"], "Boundaries: \n X: " + GameSafeSpace.right + " Y: " + GameSafeSpace.bottom + "", {
+        position: "relative",
+        textAlign: "center",
+        fontSize: 30
+    }, true);
+    SettingsContainer.AttachToMe(LevelSizeLabel);
 
-        _UtilityMenu(__editor_target);
-    } else {
-        __editor_onAction = false;
-    }
+    let stubSize = [GameSafeSpace.right, GameSafeSpace.bottom];
 
-    stubEnt.Delete();
+    const LevelSizeChng = new GameButton(
+        [0, 0],
+        ["80%", 30],
+        "Change Size",
+        () => {
+            var thing = _InputMenu([LevelSizeChng.pos[0] + LevelSizeChng.coll[0], LevelSizeChng.pos[1]],
+                () => {
+                    SettingsContainer.Delete();
+                    SetPlayableAreaSize(stubSize);
+                    __editor_onAction = false;
+                },
+                () => {
 
+                },
+                (newVal) => {
+                    stubSize = newVal;
+                }, ["Width: ", stubSize[0]], ["Height: ", stubSize[1]]);
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "blue",
+            fontSize: 20,
+            index: 4,
+            border: {
+                borderImg: "blue",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        true
+    );
+    SettingsContainer.AttachToMe(LevelSizeChng);
+
+    const BGImgChng = new GameButton(
+        [0, 0],
+        ["80%", 30],
+        "Change background image",
+        () => {
+            LoadFile('image/*', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    const image = e.target.result;
+
+                    try {
+                        SetGameBackground(image);
+                    } catch (error) {
+                        console.error('Error:', error);
+                    }
+                };
+
+                reader.readAsDataURL(file);
+
+                reader.onerror = function (error) {
+                    console.error('Error:', error);
+                };
+
+                reader.readAsText(file);
+            });
+            SettingsContainer.Delete();
+            __editor_onAction = false;
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "blue",
+            fontSize: 20,
+            index: 4,
+            border: {
+                borderImg: "blue",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        true
+    );
+    SettingsContainer.AttachToMe(BGImgChng);
+
+    const weaponSectionText = new GameText([0, 0], ["max-content", "max-content"], "Registered weapons: ", {
+        position: "relative",
+        fontSize: 30
+    }, true);
+    SettingsContainer.AttachToMe(weaponSectionText);
+
+    const WeaponsContainer = new GameContainer(
+        [0, 0],
+        ["max-content", "max-content"],
+        {
+            position: "relative",
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
+            alignY: "center",
+            BGColor: "#ffffff",
+            padding: 15,
+            gap: 10,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 10
+            }
+        },
+        false,
+        true
+    );
+    SettingsContainer.AttachToMe(WeaponsContainer);
+
+    _GenerateWeaponList(WeaponsContainer, _VisEntInfo);
+
+    const AddWepBtn = new GameButton(
+        [0, 0],
+        ["80%", "max-content"],
+        "New Weapon",
+        () => {
+            _VisEntInfo(_CreateSampleEnt("weapon"));
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "green",
+            fontSize: 20,
+            index: 4,
+            border: {
+                borderImg: "green",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        true
+    );
+
+    WeaponsContainer.AttachToMe(AddWepBtn);
+
+    const LoadSaveContainer = new GameContainer(
+        [0, 0],
+        ["max-content", "max-content"],
+        {
+            position: "relative",
+            display: "flex",
+            alignX: "center",
+            alignY: "center",
+            BGColor: "#ffffff",
+            padding: 15,
+            gap: 10,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 10
+            }
+        },
+        false,
+        true
+    );
+
+    const SaveLevelBtn = new GameButton(
+        [0, 0],
+        ["max-content", "max-content"],
+        "Save level",
+        () => {
+            _SaveLevel();
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "green",
+            fontSize: 20,
+            padding: 5,
+            index: 4,
+            border: {
+                borderImg: "green",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        true
+    );
+
+    const LoadLevelBtn = new GameButton(
+        [0, 0],
+        ["max-content", "max-content"],
+        "Load level",
+        () => {
+            _LoadLevelFile();
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "blue",
+            fontSize: 20,
+            padding: 5,
+            index: 4,
+            border: {
+                borderImg: "blue",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        true
+    );
+
+    SettingsContainer.AttachToMe(LoadSaveContainer);
+    LoadSaveContainer.AttachToMe(SaveLevelBtn);
+    LoadSaveContainer.AttachToMe(LoadLevelBtn);
 }
 
 function _UtilityMenu(selectedEnt) {
@@ -338,6 +608,37 @@ function _UtilityMenu(selectedEnt) {
 
 }
 
+async function _SelectEnt() {
+
+    if (isMenuOpen("UtilityMenu")) {
+        return;
+    }
+
+    __editor_onAction = true;
+
+    let stubEnt = undefined;
+    if (GetEnt("mouseCast") != undefined)
+        stubEnt = GetEnt("mouseCast");
+    else
+        stubEnt = new Entity("mouseCast", mousePos, [1, 1], "transparent");
+
+    stubEnt.ignoreGravity = true;
+    stubEnt.solid = false;
+
+    _collMain(stubEnt); // Big, huge brain move
+
+    if (stubEnt.collTarget != undefined) {
+        __editor_target = stubEnt.collTarget;
+
+        _UtilityMenu(__editor_target);
+    } else {
+        __editor_onAction = false;
+    }
+
+    stubEnt.Delete();
+
+}
+
 function _GiveSentWep(targetEnt) {
 
     const WeaponsContainer = new GameContainer(
@@ -385,115 +686,26 @@ function _SizeEnt(targetEnt) {
         }
     ]);
 
-    const SizeTextContainer = new GameContainer(
-        [endSizeRef.pos[0] + endSizeRef.coll[0] + 10, endSizeRef.pos[1]],
-        [200, "max-content"],
-        {
-            display: "flex",
-            flexDir: "column",
-            alignX: "center",
-            alignY: "top",
-            BGColor: "#ffffff",
-            padding: 20,
-            index: 11,
-            gap: 10,
-            border: {
-                borderImg: "black",
-                borderSize: 1,
-                borderStyle: "solid",
-                borderRadius: 25
-            }
-        },
-        false,
-        true
-    );
-
-    SizeTextContainer.SetID("EntSizeEditor")
-    SizeTextContainer.onDelete = () => {
-        endSizeRef.Delete();
-    };
-
-    const Width = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], targetEnt.coll[0] + UOS, "text",
-        () => {
-            updateEntSize([Width.text, Height.text])
-        },
-        {
-            position: "relative",
-            display: "flex",
-            alignX: "left",
-            alignY: "center",
-            BGColor: "#ffffff",
-            index: 5,
-            padding: 10,
-            border:
-            {
-                borderImg: "black",
-                borderSize: 1,
-                borderStyle: "solid",
-                borderRadius: 25
-            }
-        },
-        false
-    );
-
-    const Height = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], targetEnt.coll[1] + UOS, "text",
-        () => {
-            updateEntSize([Width.text, Height.text])
-        },
-        {
-            display: "flex",
-            position: "relative",
-            alignX: "left",
-            alignY: "center",
-            BGColor: "#ffffff",
-            index: 5,
-            padding: 10,
-            border:
-            {
-                borderImg: "black",
-                borderSize: 1,
-                borderStyle: "solid",
-                borderRadius: 25
-            }
-        },
-        false
-    );
-
-    const Confirm = new GameButton(
-        [0, 0],
-        ["max-content", "max-content"],
-        "Confirm",
-        () => {
-            targetEnt.SetSize(endSizeRef.coll)
-            SizeTextContainer.Delete();
-            __editor_onAction = false;
-        },
-        {
-            display: "flex",
-            position: "relative",
-            alignX: "left",
-            alignY: "top",
-            color: "green",
-            padding: 5,
-            border: {
-                borderImg: "green",
-                borderSize: 3,
-                borderStyle: "solid",
-                borderRadius: 10
-            },
-            fontSize: 20
-        },
-        true
-    );
-
-    SizeTextContainer.AttachToMe(Width);
-    SizeTextContainer.AttachToMe(Height);
-    SizeTextContainer.AttachToMe(Confirm);
+    let size = targetEnt.coll;
 
     const updateEntSize = (newSize) => {
         endSizeRef.SetSize(newSize);
-        SizeTextContainer.Teleport([endSizeRef.pos[0] + endSizeRef.coll[0] + 10, endSizeRef.pos[1]], true);
+        if (SizeTextContainer != null)
+            SizeTextContainer.Teleport([endSizeRef.pos[0] + endSizeRef.coll[0] + 10, endSizeRef.pos[1]], true);
     }
+
+    var SizeTextContainer = _InputMenu([endSizeRef.pos[0] + endSizeRef.coll[0] + 10, endSizeRef.pos[1]],
+        () => {
+            targetEnt.SetSize(size);
+            endSizeRef.Delete();
+
+        },
+        () => endSizeRef.Delete(),
+        (newVal) => {
+            size = newVal;
+            updateEntSize(size)
+
+        }, ["Width: ", size[0]], ["Height: ", size[1]]);
 }
 
 function _MoveEnt(targetEnt) {
@@ -545,8 +757,6 @@ function _SetEntImage(targetEnt) {
         reader.onload = function (e) {
             const image = e.target.result;
 
-            cl(image)
-
             try {
                 targetEnt.SetModel(image);
             } catch (error) {
@@ -560,7 +770,6 @@ function _SetEntImage(targetEnt) {
             console.error('Error:', error);
         };
 
-        reader.readAsText(file);
     });
 
     __editor_onAction = false;
@@ -713,114 +922,6 @@ function _CreateSampleEnt(type) {
 
 }
 
-function _StartLevelSettings() {
-
-    __editor_levelSettings = new GameButton(
-        [920, -430],
-        [80, 80],
-        "",
-        () => {
-            _LevelSidebar()
-        },
-        {},
-        true
-    );
-
-    __editor_levelSettings.SetModel("assets/img/editor/settings.png");
-    hudContainer.AttachToMe(__editor_levelSettings);
-}
-
-function _LevelSidebar() {
-
-    if (isMenuOpen("EntSideBar")) {
-        CloseMenu("EntSideBar");
-        return;
-    }
-
-    const SettingsContainer = new GameContainer(
-        [0, 0],
-        [300, "100%"],
-        {
-            position: "absolute",
-            display: "flex",
-            flexDir: "column",
-            alignX: "center",
-            alignY: "center",
-            BGColor: "#ffffff",
-            index: 45,
-            padding: 15,
-            gap: 10,
-            border: {
-                borderImg: "black",
-                borderSize: 1,
-                borderStyle: "solid"
-            }
-        },
-        false,
-        true
-    );
-    SettingsContainer.SetID("EntSideBar");
-
-    const weaponSectionText = new GameText([0, 0], ["max-content", "max-content"], "Registered weapons: ", {
-        position: "relative",
-        fontSize: 30
-    }, true);
-    SettingsContainer.AttachToMe(weaponSectionText);
-
-    const WeaponsContainer = new GameContainer(
-        [0, 0],
-        ["max-content", "max-content"],
-        {
-            position: "relative",
-            display: "flex",
-            flexDir: "column",
-            alignX: "center",
-            alignY: "center",
-            BGColor: "#ffffff",
-            padding: 15,
-            gap: 10,
-            border: {
-                borderImg: "black",
-                borderSize: 1,
-                borderStyle: "solid",
-                borderRadius: 10
-            }
-        },
-        false,
-        true
-    );
-    SettingsContainer.AttachToMe(WeaponsContainer);
-
-    _GenerateWeaponList(WeaponsContainer, _VisEntInfo);
-
-    const AddWepBtn = new GameButton(
-        [0, 0],
-        ["80%", "max-content"],
-        "New Weapon",
-        () => {
-            _VisEntInfo(_CreateSampleEnt("weapon"));
-        },
-        {
-            display: "flex",
-            position: "relative",
-            alignX: "center",
-            alignY: "center",
-            color: "green",
-            fontSize: 20,
-            index: 4,
-            border: {
-                borderImg: "green",
-                borderSize: 1,
-                borderStyle: "solid",
-                borderRadius: 25
-            }
-        },
-        true
-    );
-
-    WeaponsContainer.AttachToMe(AddWepBtn);
-}
-
 function _VisEntInfo(targetEnt) {
 
     if (isMenuOpen("EntSideBar")) {
@@ -836,6 +937,7 @@ function _VisEntInfo(targetEnt) {
             display: "flex",
             alignX: "center",
             alignY: "center",
+            BGColor: "#00000033",
             index: 15
         },
         true,
@@ -1138,55 +1240,6 @@ function _EditEntParam(targetEnt, key, curVal, valType) {
 
     let inputBox = undefined;
 
-    switch (valType) {
-        case "boolean":
-            inputBox = new GameCheckbox([0, 0], 20, curVal, () => { }, undefined, true)
-            break;
-        case "number":
-        case "string":
-            inputBox = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], curVal, valType == "number" ? "number" : "text",
-                () => { },
-                {
-                    display: "flex",
-                    position: "relative",
-                    alignX: "left",
-                    alignY: "center",
-                    BGColor: "#ffffff",
-                    index: 5,
-                    padding: 10,
-                    border:
-                    {
-                        borderImg: "black",
-                        borderSize: 1,
-                        borderStyle: "solid",
-                        borderRadius: 25
-                    }
-                },
-                false
-            );
-            break;
-        default:
-            if (devMode)
-                console.warn("Type of value was not supported by the function! value: " + valType);
-            return;
-    }
-
-    const RootContainer = new GameContainer(
-        [0, 0],
-        ["100%", "100%"],
-        {
-            display: "flex",
-            position: "absolute",
-            BGColor: "#33333333",
-            alignX: "center",
-            alignY: "center",
-            index: 15
-        },
-        true,
-        true
-    );
-    RootContainer.SetID("EditElemParam");
-
     const EditInfoContainer = new GameContainer(
         [0, 0],
         [250, "max-content"],
@@ -1211,6 +1264,85 @@ function _EditEntParam(targetEnt, key, curVal, valType) {
         true,
         false
     );
+
+    const InputLabelDFlexContainer = new GameContainer(
+        [0, 0],
+        ["60%", "max-content"],
+        {
+            position: "relative",
+            display: "flex",
+            alignX: "center",
+            alignY: "center",
+            BGColor: "#ffffff",
+            gap: 10
+        },
+        true,
+        false
+    );
+    EditInfoContainer.AttachToMe(InputLabelDFlexContainer);
+
+    let inputLabel = new GameText([0, 0], ["calc(100% - 20px)", "max-content"], key + ": ",
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            BGColor: "#ffffff",
+        },
+        true
+    );
+    InputLabelDFlexContainer.AttachToMe(inputLabel);
+
+    switch (valType) {
+        case "boolean":
+            inputBox = new GameCheckbox([0, 0], 20, curVal, () => { }, undefined, true)
+            InputLabelDFlexContainer.AttachToMe(inputBox);
+            break;
+        case "number":
+        case "string":
+            inputBox = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], curVal, valType == "number" ? "number" : "text",
+                () => { },
+                {
+                    display: "flex",
+                    position: "relative",
+                    alignX: "left",
+                    alignY: "center",
+                    BGColor: "#ffffff",
+                    index: 5,
+                    padding: 10,
+                    border:
+                    {
+                        borderImg: "black",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 25
+                    }
+                },
+                false
+            );
+            EditInfoContainer.AttachToMe(inputBox);
+            break;
+        default:
+            if (devMode)
+                console.warn("Type of value was not supported by the function! value: " + valType);
+            return;
+    }
+
+    const RootContainer = new GameContainer(
+        [0, 0],
+        ["100%", "100%"],
+        {
+            display: "flex",
+            position: "absolute",
+            BGColor: "#33333333",
+            alignX: "center",
+            alignY: "center",
+            index: 15
+        },
+        true,
+        true
+    );
+    RootContainer.SetID("EditElemParam");
 
     RootContainer.AttachToMe(EditInfoContainer);
 
@@ -1241,7 +1373,7 @@ function _EditEntParam(targetEnt, key, curVal, valType) {
 
             RootContainer.Delete();
             CloseMenu("EntInfoBox");
-            __editor_onAction = false;
+            _VisEntInfo(targetEnt);
         },
         {
             display: "flex",
@@ -1286,11 +1418,392 @@ function _EditEntParam(targetEnt, key, curVal, valType) {
         false
     );
 
-    EditInfoContainer.AttachToMe(inputBox);
     EditInfoContainer.AttachToMe(ActionBtnContainer);
     ActionBtnContainer.AttachToMe(ApplyBtn);
     ActionBtnContainer.AttachToMe(CancelBtn);
 
+}
+
+// universal input menu creator (valField uses [label, value] parameter)
+function _InputMenu(contPos, onConfirm, onCancel, onValChange, ...valField) {
+
+    let valRet = [];
+
+    const DataContainer = new GameContainer(
+        contPos,
+        [200, "max-content"],
+        {
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
+            alignY: "top",
+            BGColor: "#ffffff",
+            padding: 20,
+            index: 51,
+            gap: 10,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false,
+        true
+    );
+
+    const CloseMenuBtn = new GameButton(
+        [0, 0],
+        [15, "max-content"],
+        "X",
+        () => {
+            DataContainer.Delete();
+            onCancel();
+            __editor_onAction = false;
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "red",
+            fontSize: 15,
+            padding: 5,
+            border: {
+                borderImg: "red",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: "50%"
+            }
+        },
+        true
+    );
+    DataContainer.AttachToMe(CloseMenuBtn);
+
+    valField.forEach((dat, index) => {
+
+        if (!Array.isArray(dat)) {
+            if (devMode)
+                console.warn("Invalid field supplied to _InputMenu! fields use ['label', value] format!");
+            return;
+        }
+
+        let inputBox = undefined;
+
+        let inputLabel = new GameText([0, 0], ["calc(100% - 20px)", "max-content"], dat[0],
+            {
+                display: "flex",
+                position: "relative",
+                alignX: "left",
+                alignY: "bottom",
+                BGColor: "#ffffff",
+            },
+            true
+        );
+
+        switch (typeof dat[1]) {
+            case "boolean":
+                inputBox = new GameCheckbox([0, 0], 20, dat[1], () => { valRet.splice(index, 1, inputBox.text); onValChange(valRet) }, undefined, true)
+                break;
+            case "number":
+            case "string":
+                inputBox = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], dat[1], typeof dat[1] == "number" ? "number" : "text",
+                    () => { valRet.splice(index, 1, typeof dat[1] == "number" ? Number(inputBox.text) : inputBox.text); onValChange(valRet) },
+                    {
+                        display: "flex",
+                        position: "relative",
+                        alignX: "left",
+                        alignY: "center",
+                        BGColor: "#ffffff",
+                        index: 5,
+                        padding: 10,
+                        border:
+                        {
+                            borderImg: "black",
+                            borderSize: 1,
+                            borderStyle: "solid",
+                            borderRadius: 25
+                        }
+                    },
+                    false
+                );
+                break;
+            default:
+                if (devMode)
+                    console.warn("Type of value was not supported by the function! value: " + dat);
+                return;
+        }
+
+        valRet.push(dat[1]);
+
+        DataContainer.AttachToMe(inputLabel);
+        DataContainer.AttachToMe(inputBox);
+    });
+
+    const Confirm = new GameButton(
+        [0, 0],
+        ["max-content", "max-content"],
+        "Confirm",
+        () => { onConfirm(); DataContainer.Delete(); __editor_onAction = false },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "left",
+            alignY: "top",
+            color: "green",
+            padding: 5,
+            border: {
+                borderImg: "green",
+                borderSize: 3,
+                borderStyle: "solid",
+                borderRadius: 10
+            },
+            fontSize: 20
+        },
+        true
+    );
+
+    DataContainer.AttachToMe(Confirm);
+
+    return DataContainer;
+}
+
+function _SaveLevel() {
+    CloseMenu("EntSideBar");
+    __editor_levelSettings.Delete();
+
+    if (GetEnt("mouseCast") != undefined) {
+        let mouseCast = GetEnt("mouseCast");
+        mouseCast.Delete();
+    }
+
+    let levelDat = [];
+
+    let levelStub = {
+        type: "level",
+        keys: {
+            size: [GameSafeSpace.right, GameSafeSpace.bottom],
+            img: GameArea.style.backgroundImage,
+        },
+    };
+
+    levelDat.push(levelStub);
+
+    weaponTemplate.forEach((wep) => {
+
+        //hardcoded weapon
+        if (wep.name == "DEFAULTMELEE")
+            return;
+
+        let stubInfo = {
+            type: wep.entType(),
+            keys: {}
+        }
+
+        let keyStub = {};
+
+        for (const key in wep) {
+
+            if (_LSLisStateVal(key) || typeof wep[key] == "function")
+                continue;
+
+            if (key == "docRef") {
+                keyStub[key + "ID"] = wep[key].id;
+                continue;
+            } else if (key == "weapons") {
+                keyStub[key + "Name"] = wep[key].name;
+                continue;
+            }
+
+            keyStub[key] = wep[key];
+        }
+
+        stubInfo.keys = keyStub;
+
+        levelDat.push(stubInfo);
+    })
+
+    entities.forEach((ent) => {
+
+        if (ent.entType() == "uielem") // cannot create UI elements (not yet at least)
+            return;
+
+        let stubInfo = {
+            type: ent.entType(),
+            keys: {}
+        }
+
+        let keyStub = {};
+
+        for (const key in ent) {
+
+            if (_LSLisStateVal(key) || typeof ent[key] == "function")
+                continue;
+
+            if (key == "docRef") {
+                keyStub[key + "ID"] = ent[key].id;
+                continue;
+            } else if (key == "weapons") {
+                keyStub[key + "Name"] = ent[key].name;
+                continue;
+            } else if (key == "mdl") {
+                // keyStub[key] = CompressImage(ent[key]);
+                // continue;
+            }
+
+            keyStub[key] = ent[key];
+        }
+
+        stubInfo.keys = keyStub;
+
+        levelDat.push(stubInfo);
+    })
+
+    cl(levelDat);
+
+    const RootContainer = new GameContainer(
+        [0, 0],
+        ["100%", "100%"],
+        {
+            position: "absolute",
+            display: "flex",
+            alignX: "center",
+            alignY: "center",
+            BGColor: "#00000099",
+            index: 49
+        },
+        true,
+        true
+    );
+    RootContainer.SetID("EntInfoBox");
+
+    const InfoContainer = new GameContainer(
+        [0, 0],
+        [300, 400],
+        {
+            position: "relative",
+            display: "flex",
+            flexDir: "column",
+            alignX: "left",
+            alignY: "top",
+            BGColor: "#ffffff",
+            padding: 15,
+            gap: 10,
+            index: 16,
+            overflow: "scroll",
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 10
+            }
+        },
+        true,
+        false
+    );
+
+    const LevelDatImp = new GameInputBox([0, 0], ["calc(100% - 20px)", "max-content"], JSON.stringify(levelDat), "text",
+        () => { },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "left",
+            alignY: "center",
+            BGColor: "#ffffff",
+            index: 5,
+            padding: 10,
+            border:
+            {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false
+    );
+    LevelDatImp.docRef.readOnly = true;
+
+    navigator.clipboard.writeText(JSON.stringify(levelDat) + ";");
+
+    const QuitEditor = new GameButton(
+        [0, 0],
+        ["100%", "max-content"],
+        "Close",
+        () => {
+            RootContainer.Delete();
+            _StartLevelSettings();
+            __editor_onAction = false;
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "blue",
+            fontSize: 20,
+            index: 4,
+            border: {
+                borderImg: "blue",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        true
+    );
+
+    RootContainer.AttachToMe(InfoContainer);
+    InfoContainer.AttachToMe(LevelDatImp);
+    InfoContainer.AttachToMe(QuitEditor);
+}
+
+function _LoadLevelFile() {
+
+    CloseMenu("EntSideBar");
+    let levelData = "";
+
+    LoadFile('.js,.javascript,text/javascript', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            const scriptContent = e.target.result;
+
+            try {
+                const levelMatch = scriptContent.match(/loadedLevel\s*=\s*(\[.*?\]|\{.*?\});/s);
+
+                if (!levelMatch) {
+                    alert("Failed loading the file! make sure 'loadedLevel = [entity defitions];'");
+                    return;
+                }
+
+                const newLoadedLevel = JSON.parse(levelMatch[1]);
+
+                _LoadLevel(newLoadedLevel);
+
+            } catch (error) {
+                console.error('Error executing level script:', error);
+                alert("Error loading level script!");
+            }
+        };
+
+        reader.onerror = function (error) {
+            console.error('Error:', error);
+        };
+
+        reader.readAsText(file);
+    });
+}
+
+
+function _LSLisStateVal(key) {
+    return key == "collTarget" || key == "end" || key == "shouldFall" || key == "falling" ||
+        key == "midAir" || key == "iIgnoreGravity" || key == "interpolating" ||
+        key == "dead" || key == "target" || key == "interpos" || key == "reloading" ||
+        key == "curAmmoCount" || key == "curAmmoCountRes" || key == "LFT";
 }
 
 function isMenuOpen(menuID) {
