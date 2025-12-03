@@ -85,6 +85,92 @@ function LoadFile(accept, action) {
     fileInput.click();
 }
 
+function PickColor(curCol = "#ff0000", onConfirm, onCancel, onChange) {
+
+    const DataContainer = new GameContainer(
+        mousePos,
+        [200, "max-content"],
+        {
+            display: "flex",
+            flexDir: "column",
+            alignX: "center",
+            alignY: "top",
+            BGColor: "#ffffff",
+            padding: 20,
+            index: 51,
+            gap: 10,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false,
+        true
+    );
+    const CloseMenuBtn = new GameButton(
+        [0, 0],
+        [15, "max-content"],
+        "X",
+        () => {
+            DataContainer.Delete();
+            onCancel();
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "red",
+            fontSize: 15,
+            padding: 5,
+            border: {
+                borderImg: "red",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: "50%"
+            }
+        },
+        true
+    );
+    DataContainer.AttachToMe(CloseMenuBtn);
+
+    const ApplyBtn = new GameButton(
+        [0, 0],
+        ["50%", "max-content"],
+        "Apply",
+        () => {
+            DataContainer.Delete();
+            onConfirm()
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "green",
+            fontSize: 20,
+            padding: 5,
+            border: {
+                borderImg: "green",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        false
+    );
+
+    const colorPicker = document.createElement('input');
+    colorPicker.type = 'color';
+    colorPicker.value = curCol;
+    colorPicker.addEventListener('change', (event) => { onChange(event) });
+
+    DataContainer.AttachToMe(colorPicker);
+    DataContainer.AttachToMe(ApplyBtn);
+}
+
 async function D_DrawLine(start, end, color, duration) {
 
     if (!devMode) return;
@@ -172,9 +258,12 @@ async function _StartSys() {
 
         if (getActionFromKeybind(event.key).action == "PauseGame") {
 
-            if (!devMode) return;
-
             gamePaused = !gamePaused;
+
+            if (gamePaused)
+                hudElem_GP.docRef.style.opacity = 1;
+            else
+                hudElem_GP.docRef.style.opacity = 0;
         }
 
     })

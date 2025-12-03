@@ -10,9 +10,12 @@ var hudElem_health = new GameText([-850, 800], [50, 500], "", HUDStyle, true)
 var hudElem_ammo = new GameText([600, 800], [50, 500], "", HUDStyle, true)
 var hudElem_TPS = new GameText([1100, 0], [300, 490], "", { ...HUDStyle, fontSize: 20 }, true)
 
+var hudElem_GP = new GameText([0, 0], [800, 490], "Game paused", { ...HUDStyle, opacity: 0 }, true)
+
 hudContainer.AttachToMe(hudElem_health);
 hudContainer.AttachToMe(hudElem_ammo);
 hudContainer.AttachToMe(hudElem_TPS);
+hudContainer.AttachToMe(hudElem_GP);
 
 async function UpdateHUD() {
 
@@ -39,4 +42,5 @@ function setHUDTextColor(col) {
     hudElem_health.docRef.style.color = col;
     hudElem_ammo.docRef.style.color = col;
     hudElem_TPS.docRef.style.color = col;
+    hudElem_GP.docRef.style.color = col;
 }

@@ -15,14 +15,18 @@ var diry = 0;
 
 function _initControls(target) {
     movementTarget = target;
-    movementTarget.target = new Entity("mousetarget", [0, 0], [1, 1], ["", { opacity: 0 }])
-    movementTarget.target.ignoreGravity = true;
-    movementTarget.target.solid = false;
+    __CreateMouseTarget();
 
-    dirx = movementTarget.pos[0];
-    diry = movementTarget.pos[1];
+    dirx = movementTarget.pos[0] + movementTarget.coll[0];
+    diry = movementTarget.pos[1] + movementTarget.coll[1];
 
     _baseMovement();
+}
+
+function __CreateMouseTarget() {
+    movementTarget.target = new Entity("mousetarget", [0, 0], [1, 1], ["a", { opacity: 1 }])
+    movementTarget.target.ignoreGravity = true;
+    movementTarget.target.solid = false;
 }
 
 function _startMovement() {
@@ -76,6 +80,7 @@ function _baseMovement() {
     });
 
     RegisterInput(" ", "shoot", () => {
+        cl(movementTarget.target)
         movementTarget.target.Teleport([mousePos[0], mousePos[1]]);
         movementTarget.weapons.Shoot(movementTarget);
     });

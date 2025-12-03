@@ -5,7 +5,11 @@ let __editor_onAction = false;
 
 let __editor_levelSettings = undefined;
 
+let __editor_filePathPrefix = "assets/img/"
+
 function _LevelEditorMain() {
+
+    __editor_mode = true;
 
     window.scrollTo(0, 0);
 
@@ -60,7 +64,7 @@ function _StartLevelSettings() {
         true
     );
 
-    __editor_levelSettings.SetModel("assets/img/editor/settings.png");
+    __editor_levelSettings.SetModel(__editor_filePathPrefix + "editor/settings.png");
     hudContainer.AttachToMe(__editor_levelSettings);
 }
 
@@ -159,25 +163,7 @@ function _LevelSidebar() {
                 const file = event.target.files[0];
                 if (!file) return;
 
-                const reader = new FileReader();
-
-                reader.onload = function (e) {
-                    const image = e.target.result;
-
-                    try {
-                        SetGameBackground(image);
-                    } catch (error) {
-                        console.error('Error:', error);
-                    }
-                };
-
-                reader.readAsDataURL(file);
-
-                reader.onerror = function (error) {
-                    console.error('Error:', error);
-                };
-
-                reader.readAsText(file);
+                SetGameBackground(__editor_filePathPrefix + file.name);
             });
             SettingsContainer.Delete();
             __editor_onAction = false;
@@ -533,6 +519,7 @@ function _UtilityMenu(selectedEnt) {
         }
 
         let SetEntImgBtn = undefined;
+        let SetEntColorBtn = undefined;
 
         if (selectedEnt.entType() != "trigger") {
             SetEntImgBtn = new GameButton(
@@ -541,6 +528,31 @@ function _UtilityMenu(selectedEnt) {
                 "Change image",
                 () => {
                     _SetEntImage(selectedEnt);
+                    UtilContainer.Delete();
+                },
+                {
+                    display: "flex",
+                    position: "relative",
+                    alignX: "center",
+                    alignY: "center",
+                    color: "black",
+                    fontSize: 20,
+                    border: {
+                        borderImg: "black",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 25
+                    }
+                },
+                true
+            );
+
+            SetEntColorBtn = new GameButton(
+                [0, 0],
+                ["100%", "max-content"],
+                "Change color",
+                () => {
+                    _SetEntColor(selectedEnt);
                     UtilContainer.Delete();
                 },
                 {
@@ -594,6 +606,8 @@ function _UtilityMenu(selectedEnt) {
         UtilContainer.AttachToMe(GetEntInfoBtn);
         if (selectedEnt.entType() != "trigger")
             UtilContainer.AttachToMe(SetEntImgBtn);
+        if (selectedEnt.entType() != "trigger")
+            UtilContainer.AttachToMe(SetEntColorBtn);
         if (selectedEnt.entType() == "sentient")
             UtilContainer.AttachToMe(GiveWeaponBtn);
         UtilContainer.AttachToMe(moveToBtn);
@@ -752,27 +766,33 @@ function _SetEntImage(targetEnt) {
         const file = event.target.files[0];
         if (!file) return;
 
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-            const image = e.target.result;
-
-            try {
-                targetEnt.SetModel(image);
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        };
-
-        reader.readAsDataURL(file);
-
-        reader.onerror = function (error) {
+        try {
+            targetEnt.SetModel(__editor_filePathPrefix + file.name);
+        } catch (error) {
             console.error('Error:', error);
-        };
+        }
 
     });
 
     __editor_onAction = false;
+}
+
+function _SetEntColor(targetEnt) {
+
+    __editor_onAction = true;
+
+    let orgCol = targetEnt.mdl;
+    cl(targetEnt.docRef.style.backgroundColor);
+    
+    PickColor(targetEnt.docRef.style.backgroundColor, () => {
+        __editor_onAction = false;
+    }, () => {
+        targetEnt.SetModel(orgCol);
+        __editor_onAction = false;
+    }, () => {
+    }, (event) => {
+        targetEnt.SetModel(event.target.value);
+    });
 }
 
 function _selectEntType() {
@@ -1045,8 +1065,10 @@ function _VisEntInfo(targetEnt) {
             () => {
                 if (targetEnt.entType() != "weapon")
                     _EditEntParam(targetEnt, "docRef ID", targetEnt.docRef.id, typeof targetEnt.docRef.id);
-                else
+                else {
+
                     _EditEntParam(targetEnt, "name", targetEnt.name, typeof targetEnt.name);
+                }
             },
             {
                 display: "flex",
@@ -1084,6 +1106,11 @@ function _VisEntInfo(targetEnt) {
             key == "dead" || key == "target" || key == "interpos" || key == "reloading" ||
             key == "curAmmoCount" || key == "curAmmoCountRes" || key == "LFT" || key == "coll" ||
             typeof targetEnt[key] == "function") {
+            continue;
+        }
+
+        //triggers are supposed to only detect collision.
+        if (targetEnt.entType() == "trigger" && (key == "ignoreGravity" || key == "solid" || key == "movespeed" || key == "weight") ) {
             continue;
         }
 
@@ -1198,6 +1225,38 @@ function _VisEntInfo(targetEnt) {
             KeyContainer.AttachToMe(EditFieldBtn);
 
         }
+    }
+
+    if (targetEnt.entType() == "weapon" && targetEnt.name != "DEFAULTMELEE") {
+
+        const DeleteWeaponBtn = new GameButton(
+            [0, 0],
+            ["100%", "max-content"],
+            "Delete weapon",
+            () => {
+                weaponTemplate.delete(targetEnt.name)
+                __editor_onAction = false;
+                CloseMenu("EntInfoBox");
+            },
+            {
+                display: "flex",
+                position: "relative",
+                alignX: "center",
+                alignY: "center",
+                color: "red",
+                fontSize: 10,
+                padding: 5,
+                border: {
+                    borderImg: "red",
+                    borderSize: 1,
+                    borderStyle: "solid",
+                    borderRadius: 25
+                }
+            },
+            false
+        );
+
+        InfoContainer.AttachToMe(DeleteWeaponBtn);
     }
 }
 
@@ -1367,13 +1426,32 @@ function _EditEntParam(targetEnt, key, curVal, valType) {
         "Apply",
         () => {
 
-            if (key != "docRef ID") {
+            if (key != "docRef ID" && key != "name") {
                 if (valType == "number")
                     targetEnt[key] = Number(inputBox.GetValue());
                 else
                     targetEnt[key] = inputBox.GetValue();
-            } else {
+            } else if (key == "docRef ID") {
                 targetEnt.docRef.id = inputBox.GetValue();
+            } else if (key == "name") {
+                let oldKey = targetEnt[key];
+                let nKey = inputBox.GetValue();
+                targetEnt[key] = nKey;
+                weaponTemplate.set(nKey, targetEnt);
+
+                sentients.forEach(sEnt => {
+                    if (sEnt.weapons.name == oldKey)
+                        sEnt.GiveWeapon(GetWeaponByName(nKey))
+                })
+
+                weaponTemplate.delete(oldKey);
+            }
+
+            if (targetEnt.entType() == "weapon" && key != "name") {
+                sentients.forEach(sEnt => {
+                    if (sEnt.weapons.name == targetEnt.name)
+                        sEnt.GiveWeapon(GetWeaponByName(targetEnt.name))
+                })
             }
 
             RootContainer.Delete();
@@ -1632,6 +1710,10 @@ function _SaveLevel() {
 
         if (ent.entType() == "uielem") // cannot create UI elements (not yet at least)
             return;
+
+        if (ent.entType() == "trigger") {
+            ent.SetModel(["", {}]); //disable the red border
+        }
 
         let stubInfo = {
             type: ent.entType(),

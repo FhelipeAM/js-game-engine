@@ -37,7 +37,7 @@ body {
 }
 
 .sentient {
-    background-color: lime !important;
+    background-color: lime;
 
     z-index: 2;
 }

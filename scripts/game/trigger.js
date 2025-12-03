@@ -14,6 +14,14 @@ class Trigger extends Entity {
                     borderStyle: "solid"
                 }
             }
+        } else {
+            styleStub = {
+                border: {
+                    borderImg: "transparent",
+                    borderSize: 0,
+                    borderStyle: "solid"
+                }
+            } 
         }
 
         super("trigger" + entCount, pos, size, ["", styleStub]);

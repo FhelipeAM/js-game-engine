@@ -59,7 +59,6 @@ function main() {
     stubEnt3.weight = cubeWeight
 
     var trigger = new Trigger([1800, 500], [100, 100], ["once"], () => {
-        cl("hellow jrnmg")
     });
 
     const playerViewRadius = 700;

@@ -407,12 +407,15 @@ function _GetLevelData(rawScript) {
 
 function _LoadLevel(levelData) {
 
-
     if (!levelData || levelData === "" || levelData == "hardcoded") {
         if (levelData != "hardcoded")
             alert("Invalid level file!");
         if (levelData != "hardcoded" && devMode)
             alert("Make sure the file has loadedLevel variable set to 'hardcoded' if there's no level or add in the 'loadedLevel = [entity defitions];' to your script.");
+        
+        if (__editor_mode && levelData == "hardcoded")
+            alert("This level was not made with the editor!");
+
         return;
     }
 
@@ -429,7 +432,7 @@ function _LoadLevel(levelData) {
 
     entities.forEach((ent) => {
 
-        if (ent.entType() == "uielem" || ent.docRef.id == "player")
+        if (ent.entType() == "uielem" || ent.docRef.id == "player" || ent.docRef.id == "mousetarget" )
             return;
 
         ent.Delete();
@@ -453,11 +456,11 @@ function _LoadLevel(levelData) {
                 entStub = new Trigger(ent.keys.pos, ent.keys.coll, ent.keys.type, () => { cl("Replace via script") }, ent.keys.ignoreEntTypes);
                 break;
             case "weapon":
-                entStub = new Weapon(ent.keys.name, ent.keys.type, ent.keys.damage, ent.keys.damage, ent.keys.ammoCount, ent.keys.ammoCount, ent.keys.fireTime, ent.keys.reloadTime, ent.keys.bulletSpeed, ent.keys.sndSet);
+                entStub = new Weapon(ent.keys.name, ent.keys.type, ent.keys.damage, ent.keys.range, ent.keys.ammoCount, ent.keys.ammoCountRes, ent.keys.fireTime, ent.keys.reloadTime, ent.keys.bulletSpeed, ent.keys.sndSet);
                 break;
             case "level":
                 SetPlayableAreaSize(ent.keys.size);
-                SetGameBackground(ent.keys.img);
+                GameArea.style.backgroundImage = ent.keys.img;
                 return;
         }
 
@@ -480,8 +483,8 @@ function _LoadLevel(levelData) {
                 entStub.SetSize(ent.keys[key]);
             }
             else if (key == "mdl") {
-                // keyStub[key] = CompressImage(ent[key]);
-                // continue;
+                entStub.SetModel(ent.keys[key]);
+                continue;
             }
 
             entStub[key] = ent.keys[key];

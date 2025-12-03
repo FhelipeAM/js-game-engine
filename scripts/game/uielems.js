@@ -121,10 +121,17 @@ class GameContainer extends BaseUIElem {
 
     AttachToMe(elem) {
 
-        if (elem.docRef.parentNode != undefined)
-            elem.docRef.parentNode.removeChild(elem.docRef);
+        if (elem.docRef != undefined ) {
+            if (elem.docRef.parentNode != undefined)
+                elem.docRef.parentNode.removeChild(elem.docRef);
 
-        this.docRef.appendChild(elem.docRef);
+            this.docRef.appendChild(elem.docRef);
+        } else {
+            if (elem.parentNode != undefined)
+                elem.parentNode.removeChild(elem);
+            
+            this.docRef.appendChild(elem);
+        }
     }
 
     Detach(elem) {
