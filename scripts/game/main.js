@@ -6,7 +6,7 @@ const HUDSpace = document.getElementById("HUD");
 const tickrate = 1;
 const gravity = 3;
 
-var devMode = true;
+var devMode = false;
 
 var loadedLevel = "";
 
@@ -452,6 +452,9 @@ function _LoadLevel(levelData) {
             case "entity":
                 entStub = new Entity(ent.keys.docRefID, ent.keys.pos, ent.keys.coll, ent.keys.img);
                 break;
+            case "origin":
+                entStub = new Origin(ent.keys.docRefID, ent.keys.pos);
+                break;
             case "trigger":
                 entStub = new Trigger(ent.keys.pos, ent.keys.coll, ent.keys.type, () => { cl("Replace via script") }, ent.keys.ignoreEntTypes);
                 break;
@@ -461,6 +464,7 @@ function _LoadLevel(levelData) {
             case "level":
                 SetPlayableAreaSize(ent.keys.size);
                 GameArea.style.backgroundImage = ent.keys.img;
+                entCount = ent.keys.LEntID;
                 return;
         }
 
@@ -482,7 +486,7 @@ function _LoadLevel(levelData) {
             else if (key == "coll") {
                 entStub.SetSize(ent.keys[key]);
             }
-            else if (key == "mdl") {
+            else if (key == "mdl" && (entStub.entType() != "trigger" && entStub.entType() != "origin")) {
                 entStub.SetModel(ent.keys[key]);
                 continue;
             }

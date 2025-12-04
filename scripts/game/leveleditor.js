@@ -15,6 +15,8 @@ function _LevelEditorMain() {
 
     hudElem_health.Delete();
     hudElem_ammo.Delete();
+    hudElem_TPS.Delete();
+    hudElem_GP.Delete();
 
     GetEnt("mousetarget").Delete();
 
@@ -463,30 +465,34 @@ function _UtilityMenu(selectedEnt) {
             true
         );
 
-        const SizeBtn = new GameButton(
-            [0, 0],
-            ["100%", "max-content"],
-            "Change shape",
-            () => {
-                _SizeEnt(selectedEnt);
-                UtilContainer.Delete();
-            },
-            {
-                display: "flex",
-                position: "relative",
-                alignX: "center",
-                alignY: "center",
-                color: "black",
-                fontSize: 20,
-                border: {
-                    borderImg: "black",
-                    borderSize: 1,
-                    borderStyle: "solid",
-                    borderRadius: 25
-                }
-            },
-            true
-        );
+        var ShapeBtn = undefined;
+
+        if (selectedEnt.entType() != "origin") {
+            ShapeBtn = new GameButton(
+                [0, 0],
+                ["100%", "max-content"],
+                "Change shape",
+                () => {
+                    _SizeEnt(selectedEnt);
+                    UtilContainer.Delete();
+                },
+                {
+                    display: "flex",
+                    position: "relative",
+                    alignX: "center",
+                    alignY: "center",
+                    color: "black",
+                    fontSize: 20,
+                    border: {
+                        borderImg: "black",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 25
+                    }
+                },
+                true
+            );
+        }
 
         var DeleteBtn = undefined;
 
@@ -521,7 +527,7 @@ function _UtilityMenu(selectedEnt) {
         let SetEntImgBtn = undefined;
         let SetEntColorBtn = undefined;
 
-        if (selectedEnt.entType() != "trigger") {
+        if (selectedEnt.entType() != "trigger" && selectedEnt.entType() != "origin") {
             SetEntImgBtn = new GameButton(
                 [0, 0],
                 ["100%", "max-content"],
@@ -604,14 +610,21 @@ function _UtilityMenu(selectedEnt) {
 
         UtilContainer.AttachToMe(CloseMenuBtn);
         UtilContainer.AttachToMe(GetEntInfoBtn);
-        if (selectedEnt.entType() != "trigger")
+
+        if (selectedEnt.entType() != "trigger" && selectedEnt.entType() != "origin")
             UtilContainer.AttachToMe(SetEntImgBtn);
-        if (selectedEnt.entType() != "trigger")
+
+        if (selectedEnt.entType() != "trigger" && selectedEnt.entType() != "origin")
             UtilContainer.AttachToMe(SetEntColorBtn);
+
         if (selectedEnt.entType() == "sentient")
             UtilContainer.AttachToMe(GiveWeaponBtn);
+
         UtilContainer.AttachToMe(moveToBtn);
-        UtilContainer.AttachToMe(SizeBtn);
+
+        if (selectedEnt.entType() != "origin")
+            UtilContainer.AttachToMe(ShapeBtn);
+
         if (selectedEnt != player)
             UtilContainer.AttachToMe(DeleteBtn);
 
@@ -783,7 +796,7 @@ function _SetEntColor(targetEnt) {
 
     let orgCol = targetEnt.mdl;
     cl(targetEnt.docRef.style.backgroundColor);
-    
+
     PickColor(targetEnt.docRef.style.backgroundColor, () => {
         __editor_onAction = false;
     }, () => {
@@ -897,7 +910,34 @@ function _selectEntType() {
         true
     );
 
+    const EntTypeOrigin = new GameButton(
+        [0, 0],
+        ["80%", "max-content"],
+        "Origin",
+        () => {
+            _CreateSampleEnt("origin");
+            EntListContainer.Delete();
+        },
+        {
+            display: "flex",
+            position: "relative",
+            alignX: "center",
+            alignY: "center",
+            color: "black",
+            fontSize: 20,
+            index: 4,
+            border: {
+                borderImg: "black",
+                borderSize: 1,
+                borderStyle: "solid",
+                borderRadius: 25
+            }
+        },
+        true
+    );
+
     EntListContainer.AttachToMe(EntTypeDef);
+    EntListContainer.AttachToMe(EntTypeOrigin);
     EntListContainer.AttachToMe(EntTypeSentient);
     EntListContainer.AttachToMe(EntTypeTrigger);
 
@@ -914,6 +954,9 @@ function _CreateSampleEnt(type) {
         default:
         case "default":
             res = new Entity("Entity" + entCount, mousePos, [100, 100], "");
+            break;
+        case "origin":
+            res = new Origin("Origin" + entCount, mousePos);
             break;
         case "weapon":
             res = new Weapon("Weapon" + entCount, "single", 15, 1000, 30, 300, 2.2, 4, 5, [
@@ -1092,6 +1135,12 @@ function _VisEntInfo(targetEnt) {
 
     }
 
+    const EntTypeText = new GameText([0, 0], ["max-content", "max-content"], "entity type: " + targetEnt.entType(), {
+        position: "relative",
+    }, true);
+
+    InfoContainer.AttachToMe(EntTypeText);
+
     for (const key in targetEnt) {
 
         let readOnly = false;
@@ -1110,7 +1159,8 @@ function _VisEntInfo(targetEnt) {
         }
 
         //triggers are supposed to only detect collision.
-        if (targetEnt.entType() == "trigger" && (key == "ignoreGravity" || key == "solid" || key == "movespeed" || key == "weight") ) {
+        //origins are supposed to only represent a position on the level.
+        if ((targetEnt.entType() == "origin" || targetEnt.entType() == "trigger") && (key == "ignoreGravity" || key == "solid" || key == "movespeed" || key == "weight")) {
             continue;
         }
 
@@ -1667,6 +1717,7 @@ function _SaveLevel() {
         keys: {
             size: [GameSafeSpace.right, GameSafeSpace.bottom],
             img: GameArea.style.backgroundImage,
+            LEntID: entCount,
         },
     };
 
@@ -1711,7 +1762,7 @@ function _SaveLevel() {
         if (ent.entType() == "uielem") // cannot create UI elements (not yet at least)
             return;
 
-        if (ent.entType() == "trigger") {
+        if (ent.entType() == "trigger" || ent.entType() == "origin") {
             ent.SetModel(["", {}]); //disable the red border
         }
 

@@ -6,7 +6,7 @@ class Trigger extends Entity {
     constructor(pos, size, type, action, ignoreEntTypes) {
         let styleStub = {};
 
-        if (devMode) {
+        if (devMode || __editor_mode) {
             styleStub = {
                 border: {
                     borderImg: "red",
