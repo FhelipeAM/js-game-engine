@@ -29,6 +29,10 @@ function GetWeaponByName(name) {
         weapon.LFT = 0;
         return weapon;
     }
+    if (devMode) {
+        console.warn(`Weapon ${name} was not found!`)
+        console.warn(weaponTemplate)
+    }
     return weaponTemplate.get("DEFAULTMELEE");
 }
 

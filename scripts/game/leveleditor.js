@@ -495,8 +495,56 @@ function _UtilityMenu(selectedEnt) {
         }
 
         var DeleteBtn = undefined;
+        var DupeBtn = undefined;
 
         if (selectedEnt != player) {
+            DupeBtn = new GameButton(
+                [0, 0],
+                ["100%", "max-content"],
+                "Duplicate",
+                () => {
+                    UtilContainer.Delete();
+                    let dupedEnt = _CreateSampleEnt(selectedEnt.entType());
+                    for (const key in selectedEnt) {
+
+                        cl(key);
+                                    
+                        if (key == "docRef" || _LSLisStateVal(key)) {
+                            continue;
+                        } else if (key == "weaponsName") {
+                            dupedEnt.GiveWeapon(GetWeaponByName(selectedEnt[key]))
+                            continue;
+                        }
+                        else if (key == "coll") {
+                            dupedEnt.SetSize(selectedEnt[key]);
+                        }
+                        else if (key == "mdl" && (dupedEnt.entType() != "trigger" && dupedEnt.entType() != "origin")) {
+                            dupedEnt.SetModel(selectedEnt[key]);
+                            continue;
+                        }
+
+                        dupedEnt[key] = selectedEnt[key];
+                    }
+                    __editor_onAction = true;
+                    _MoveEnt(dupedEnt);
+                },
+                {
+                    display: "flex",
+                    position: "relative",
+                    alignX: "center",
+                    alignY: "center",
+                    color: "blue",
+                    fontSize: 20,
+                    border: {
+                        borderImg: "blue",
+                        borderSize: 1,
+                        borderStyle: "solid",
+                        borderRadius: 25
+                    }
+                },
+                true
+            );
+
             DeleteBtn = new GameButton(
                 [0, 0],
                 ["100%", "max-content"],
@@ -625,8 +673,10 @@ function _UtilityMenu(selectedEnt) {
         if (selectedEnt.entType() != "origin")
             UtilContainer.AttachToMe(ShapeBtn);
 
-        if (selectedEnt != player)
+        if (selectedEnt != player) {
+            UtilContainer.AttachToMe(DupeBtn);
             UtilContainer.AttachToMe(DeleteBtn);
+        }
 
     }
 
@@ -704,12 +754,7 @@ function _SizeEnt(targetEnt) {
     let endSizeRef = new Entity("Entity" + entCount, targetEnt.pos, targetEnt.coll, ["",
         {
             index: 4,
-            border: {
-                borderImg: "red",
-                borderSize: 1,
-                borderStyle: "solid",
-                borderRadius: 0
-            }
+            BGColor: "#ff000088"
         }
     ]);
 
@@ -739,12 +784,7 @@ function _MoveEnt(targetEnt) {
 
     let endPosRef = new Entity("Entity" + entCount, mousePos, targetEnt.coll, ["",
         {
-            border: {
-                borderImg: "red",
-                borderSize: 1,
-                borderStyle: "solid",
-                borderRadius: 0
-            }
+            BGColor: "#ff000088"
         }
     ]);
 
@@ -795,17 +835,19 @@ function _SetEntColor(targetEnt) {
     __editor_onAction = true;
 
     let orgCol = targetEnt.mdl;
-    cl(targetEnt.docRef.style.backgroundColor);
 
-    PickColor(targetEnt.docRef.style.backgroundColor, () => {
-        __editor_onAction = false;
-    }, () => {
-        targetEnt.SetModel(orgCol);
-        __editor_onAction = false;
-    }, () => {
-    }, (event) => {
-        targetEnt.SetModel(event.target.value);
-    });
+    PickColor(targetEnt.docRef.style.backgroundColor,
+        () => {
+            __editor_onAction = false;
+        }, 
+        () => {
+            targetEnt.SetModel(orgCol);
+            __editor_onAction = false;
+        }, 
+        (event) => {
+            targetEnt.SetModel(event.target.value);
+        }
+    );
 }
 
 function _selectEntType() {

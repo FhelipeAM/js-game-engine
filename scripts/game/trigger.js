@@ -27,7 +27,7 @@ class Trigger extends Entity {
         super("trigger" + entCount, pos, size, ["", styleStub]);
 
         if (ignoreEntTypes == undefined) {
-            ignoreEntTypes = ["bullet", "uielem"];
+            ignoreEntTypes = ["bullet", "uielem", "origin"];
         }
 
         this.type = type;

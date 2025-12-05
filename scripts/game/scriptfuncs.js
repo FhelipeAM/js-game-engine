@@ -85,7 +85,7 @@ function LoadFile(accept, action) {
     fileInput.click();
 }
 
-function PickColor(curCol = "#ff0000", onConfirm, onCancel, onChange) {
+function PickColor(curCol, onConfirm, onCancel, onChange) {
 
     const DataContainer = new GameContainer(
         mousePos,
@@ -165,7 +165,7 @@ function PickColor(curCol = "#ff0000", onConfirm, onCancel, onChange) {
     const colorPicker = document.createElement('input');
     colorPicker.type = 'color';
     colorPicker.value = curCol;
-    colorPicker.addEventListener('change', (event) => { onChange(event) });
+    colorPicker.addEventListener('input', (event) => { onChange(event) });
 
     DataContainer.AttachToMe(colorPicker);
     DataContainer.AttachToMe(ApplyBtn);
